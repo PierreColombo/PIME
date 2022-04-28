@@ -1,2 +1,1 @@
-# PIM
-Python Information Measure Estimatio
+# PIM: Python Information Measures Estimation
