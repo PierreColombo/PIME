@@ -10,6 +10,80 @@ import time
 import seaborn as sns
 from tensorboardX import SummaryWriter
 
+
+import torch.nn as nn
+import torch
+from geomloss import SamplesLoss
+
+
+class MultiVariateLoss(nn.Module):
+    def __init__(self, args):
+        super(MultiVariateLoss, self).__init__()
+        assert args.multi_loss_type in ["SINKHORN", "HAUSDORFF", "ENERGY", "GAUSSIAN", "LAPLACIAN", 'RAO', 'FRECHET',
+                                        'JS']
+        self.args = args
+        self.require_learning = False
+        if self.args.multi_loss_type not in ['JS', 'RAO', 'FRECHET']:
+            self.loss = SamplesLoss(loss=self.args.multi_loss_type.lower(), p=self.args.power, blur=self.args.blur)
+
+    def compute_var(self, input, mean):
+        return torch.matmul((input - mean).transpose(1, 0), input - mean)
+
+    def compute_mean(self, input):
+        return torch.mean(input, dim=0)
+
+    def forward(self, inputs_embedded, sensitive_labels, public_labels=None):
+        if self.args.multi_loss_type in ['JS', 'RAO', 'FRECHET']:
+            mean_0 = self.compute_mean(inputs_embedded[sensitive_labels == 0])
+            mean_1 = self.compute_mean(inputs_embedded[sensitive_labels == 1])
+            var_0 = self.compute_var(inputs_embedded[sensitive_labels == 0], mean_0)
+            var_1 = self.compute_var(inputs_embedded[sensitive_labels == 1], mean_1)
+        if self.args.multi_loss_type == 'JS':
+            distance = self.js_loss(mean_0, mean_1, var_0, var_1)
+        elif self.args.multi_loss_type == 'RAO':
+            distance = self.rao_loss(mean_0, mean_1, var_0, var_1)
+        elif self.args.multi_loss_type == 'FRECHET':
+            distance = self.frechet_loss(mean_0, mean_1, var_0, var_1)
+        else:
+            distance = self.loss(inputs_embedded[sensitive_labels == 0],
+                                 inputs_embedded[sensitive_labels == 1])
+        return distance
+
+    def js_loss(self, mean_0, mean_1, var_0, var_1):
+        """
+        1/2[log|Σ2|/|Σ1|−𝑑+tr{Σ**0.5Σ1}+(𝜇2−𝜇1)𝑇Σ−12(𝜇2−𝜇1)]
+        https://stats.stackexchange.com/questions/60680/kl-divergence-between-two-multivariate-gaussians
+        """
+        d = var_1.size(1)
+        var_0 = torch.diag(var_0)
+        var_1 = torch.diag(var_1)
+        log_det_0_det_1 = (torch.sum(torch.log(var_0), dim=0) - torch.sum(torch.log(var_1), dim=0))
+        log_det_1_det_0 = (torch.sum(torch.log(var_1), dim=0) - torch.sum(torch.log(var_0), dim=0))
+        tr_0_1 = torch.sum(var_0 / var_1)
+        tr_1_0 = torch.sum(var_1 / var_0)
+        last_1 = torch.matmul((mean_0 - mean_1) * (var_1 ** (-1)), mean_0 - mean_1)
+        last_0 = torch.matmul((mean_0 - mean_1) * (var_0 ** (-1)), mean_0 - mean_1)
+
+        js = -2 * d + (log_det_0_det_1 + tr_1_0 + last_1 + log_det_1_det_0 + tr_0_1 + last_0)
+        return js / 4
+
+    def rao_loss(self, mean_0, mean_1, var_0, var_1):
+        """
+        https://www.sciencedirect.com/science/article/pii/S0166218X14004211
+        """
+        # TODO : handle the case of 0
+        first = (((mean_0 - mean_1) ** 2) / 2 + (
+                torch.sqrt(torch.diag(var_1)) + torch.sqrt(torch.diag(var_0))) ** 2) ** (1 / 2)
+        second = (((mean_0 - mean_1) ** 2) / 2 + (
+                torch.sqrt(torch.diag(var_1)) - torch.sqrt(torch.diag(var_0))) ** 2) ** (1 / 2)
+        rao = torch.sqrt(torch.sum((torch.log((first + second) / (first - second))) ** 2) * 2)
+        return rao
+
+    def frechet_loss(self, mean_0, mean_1, var_0, var_1):
+        var_0 = torch.diag(var_0)
+        var_1 = torch.diag(var_1)
+        return torch.norm(mean_0 - mean_1, p=2) ** 2 + torch.sum(var_0 + var_1 - 2 * (var_0 * var_1) ** (1 / 2
+
 sns.set_style("white")
 sns.set_context("notebook", font_scale=1.5, rc={"lines.linewidth": 4, 'lines.markersize': 10})
 
