@@ -154,7 +154,7 @@ class AlphaEntropy(DiscreteEstimator):
             return self.divergence.predict(X, U)
 
 
-class EntropyEstimator(DiscreteEstimator):
+class DiscreteEntropyEstimator(DiscreteEstimator):
     def __init__(self, name, discret_estimator, **kwargs):
         self.name = name
         self.discret_estimator = discret_estimator(name, **kwargs)
