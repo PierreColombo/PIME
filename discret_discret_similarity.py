@@ -7,6 +7,9 @@ from math import log
 from collections import defaultdict, Counter
 
 
+
+class
+
 class InfoLM:
     def __init__(self, model_name="bert-base-uncased", temperature=0.25, measure_to_use='fisher_rao',
                  use_idf_weights=True, alpha=None, beta=None):
