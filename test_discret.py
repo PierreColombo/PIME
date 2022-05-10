@@ -15,7 +15,7 @@ class TestDiscreteMethods(unittest.TestCase):
             batched_uniform_tensor = uniform_tensor.unsqueeze(0).repeat(batch_size, 1)
             random_vector = torch.nn.Softmax(dim=-1)(torch.rand(batch_size, tensor_length))
             alpha_div = AlphaDivergence('test_alpha_div', alpha)
-            alpha_entropy = EntropyEstimator('test_alpha_entropy', AlphaDivergence, alpha=alpha)
+            alpha_entropy = DiscreteEntropyEstimator('test_alpha_entropy', AlphaDivergence, alpha=alpha)
             assert torch.sum(
                 torch.isclose(alpha_div.predict(random_vector, random_vector), torch.zeros(batch_size), atol=1e-07))
             alpha_div_value = alpha_div.predict(random_vector, batched_uniform_tensor)
@@ -32,7 +32,7 @@ class TestDiscreteMethods(unittest.TestCase):
             batched_uniform_tensor = uniform_tensor.unsqueeze(0).repeat(batch_size, 1)
             random_vector = torch.nn.Softmax(dim=-1)(torch.rand(batch_size, tensor_length))
             beta_div = BetaDivergence('test_beta_div', beta)
-            beta_entropy = EntropyEstimator('test_beta_entropy', BetaDivergence, beta=beta)
+            beta_entropy = DiscreteEntropyEstimator('test_beta_entropy', BetaDivergence, beta=beta)
             assert torch.sum(
                 torch.isclose(beta_div.predict(random_vector, random_vector), torch.zeros(batch_size), atol=1e-07))
             beta_div_value = beta_div.predict(random_vector, batched_uniform_tensor)
@@ -49,7 +49,7 @@ class TestDiscreteMethods(unittest.TestCase):
             batched_uniform_tensor = uniform_tensor.unsqueeze(0).repeat(batch_size, 1)
             random_vector = torch.nn.Softmax(dim=-1)(torch.rand(batch_size, tensor_length))
             renyi_div = RenyiDivergence('test_renyi_div', alpha)
-            renyi_entropy = EntropyEstimator('test_renyi_entropy', RenyiDivergence, alpha=alpha)
+            renyi_entropy = DiscreteEntropyEstimator('test_renyi_entropy', RenyiDivergence, alpha=alpha)
             renyi_div_value = renyi_div.predict(random_vector, batched_uniform_tensor)
             renyi_entropy_value = renyi_entropy.predict(random_vector, None)
             assert torch.sum(
@@ -68,7 +68,7 @@ class TestDiscreteMethods(unittest.TestCase):
                     batched_uniform_tensor = uniform_tensor.unsqueeze(0).repeat(batch_size, 1)
                     random_vector = torch.nn.Softmax(dim=-1)(torch.rand(batch_size, tensor_length))
                     ab_div = ABDivergence('test_ab_div', alpha=alpha, beta=beta)
-                    ab_entropy = EntropyEstimator('test_ab_entropy', ABDivergence, alpha=alpha, beta=beta)
+                    ab_entropy = DiscreteEntropyEstimator('test_ab_entropy', ABDivergence, alpha=alpha, beta=beta)
                     ab_div_value = ab_div.predict(random_vector, batched_uniform_tensor)
                     ab_entropy_value = ab_entropy.predict(random_vector, None)
                     assert torch.sum(
@@ -86,7 +86,7 @@ class TestDiscreteMethods(unittest.TestCase):
             batched_uniform_tensor = uniform_tensor.unsqueeze(0).repeat(batch_size, 1)
             random_vector = torch.nn.Softmax(dim=-1)(torch.rand(batch_size, tensor_length))
             lp = LP('test_lp', p)
-            lp_uni = EntropyEstimator('test_lp_uni', LP, power=p)
+            lp_uni = DiscreteEntropyEstimator('test_lp_uni', LP, power=p)
             lp_value = lp.predict(random_vector, batched_uniform_tensor)
             lp_uni_value = lp_uni.predict(random_vector, None)
             assert torch.sum(
@@ -102,7 +102,7 @@ class TestDiscreteMethods(unittest.TestCase):
         batched_uniform_tensor = uniform_tensor.unsqueeze(0).repeat(batch_size, 1)
         random_vector = torch.nn.Softmax(dim=-1)(torch.rand(batch_size, tensor_length))
         fisher_rao = FisherRao('test_fr')
-        fisher_rao_uni = EntropyEstimator('test_fr_uni', FisherRao)
+        fisher_rao_uni = DiscreteEntropyEstimator('test_fr_uni', FisherRao)
         fisher_rao_value = fisher_rao.predict(random_vector, batched_uniform_tensor)
         fisher_rao_uni_value = fisher_rao_uni.predict(random_vector, None)
         assert torch.sum(
@@ -118,7 +118,7 @@ class TestDiscreteMethods(unittest.TestCase):
         batched_uniform_tensor = uniform_tensor.unsqueeze(0).repeat(batch_size, 1)
         random_vector = torch.nn.Softmax(dim=-1)(torch.rand(batch_size, tensor_length))
         kl = KullbackLeiblerDivergence('test_kl_div')
-        shanon_entropy = EntropyEstimator('test_shannon_entropy', KullbackLeiblerDivergence)
+        shanon_entropy = DiscreteEntropyEstimator('test_shannon_entropy', KullbackLeiblerDivergence)
         kl_value = kl.predict(random_vector, batched_uniform_tensor)
         shanon_entropy_value = shanon_entropy.predict(random_vector, None)
         assert torch.sum(
