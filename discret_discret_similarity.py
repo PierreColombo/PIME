@@ -87,7 +87,7 @@ class RenyiDivergence(DiscreteEstimator):
         return torch.log(torch.sum(X ** self.alpha * Y ** (1 - self.alpha), dim=-1)) / (self.alpha - 1)
 
 
-class BethaDivergence(DiscreteEstimator):
+class BetaDivergence(DiscreteEstimator):
     def __init__(self, name, beta):
         self.name = name
         self.beta = beta
@@ -176,13 +176,67 @@ class DiscreteEntropyEstimator(DiscreteEstimator):
             return self.discret_estimator.predict(X, U)
 
 
+class JeffreySymetrizationEstimator(DiscreteEstimator):
+    def __init__(self, name, discret_estimator, **kwargs):
+        self.name = name
+        self.discret_estimator = discret_estimator(name, **kwargs)
+
+    def predict(self, X, Y=None):
+        """
+        :param X: discreate input reference distribution over the vocabulary
+        :param Y: discreate hypothesis reference distribution over the vocabulary
+        :param alpha: alpha parameter of the divergence
+        :return: alpha divergence between the reference and hypothesis distribution
+        """
+        return (self.discret_estimator.predict(X, Y) + self.discret_estimator.predict(Y, X)) / 2
+
+
+class JensenSymetrizationEstimator(DiscreteEstimator):
+    def __init__(self, name, discret_estimator, **kwargs):
+        self.name = name
+        self.discret_estimator = discret_estimator(name, **kwargs)
+
+    def predict(self, X, Y=None):
+        """
+        :param X: discreate input reference distribution over the vocabulary
+        :param Y: discreate hypothesis reference distribution over the vocabulary
+        :param alpha: alpha parameter of the divergence
+        :return: alpha divergence between the reference and hypothesis distribution
+        """
+        return (self.discret_estimator.predict(Y, (X + Y) / 2) + self.discret_estimator.predict(X, (X + Y) / 2)) / 2
+
+
 if __name__ == '__main__':
+    from tqdm import tqdm
+
     batch_size = 10
     tensor_length = 4
     uniform_tensor = torch.tensor([1 / tensor_length for _ in range(tensor_length)])
     batched_uniform_tensor = uniform_tensor.unsqueeze(0).repeat(batch_size, 1)
 
     random_vector = torch.nn.Softmax(dim=-1)(torch.rand(batch_size, tensor_length))
-    entropy = EntropyEstimator('name', ABDivergence, alpha=1, beta=4)
+    entropy = DiscreteEntropyEstimator('name', ABDivergence, alpha=1, beta=3)
     print(entropy.predict(random_vector, None))
     print(entropy.predict(batched_uniform_tensor, None))
+
+    ab_div = ABDivergence('name', alpha=1, beta=3)
+    print(ab_div.predict(random_vector, random_vector))
+    print(ab_div.predict(batched_uniform_tensor, batched_uniform_tensor))
+
+    for alpha in tqdm([0.2, 0.677, 2], 'AB Div'):
+        for beta in tqdm([0.5], 'AB Div'):
+            if alpha + beta != 0:
+                batch_size = 10
+                tensor_length = 4
+                uniform_tensor = torch.tensor([1 / tensor_length for _ in range(tensor_length)])
+                batched_uniform_tensor = uniform_tensor.unsqueeze(0).repeat(batch_size, 1)
+                random_vector = torch.nn.Softmax(dim=-1)(torch.rand(batch_size, tensor_length))
+                ab_div = ABDivergence('test_ab_div', alpha=alpha, beta=beta)
+                ab_entropy = DiscreteEntropyEstimator('test_ab_entropy', ABDivergence, alpha=alpha, beta=beta)
+                ab_div_value = ab_div.predict(random_vector, batched_uniform_tensor)
+                ab_entropy_value = ab_entropy.predict(random_vector, None)
+                assert torch.sum(torch.isclose(ab_div.predict(random_vector, random_vector), torch.zeros(batch_size),
+                                               atol=1e-7))
+                assert torch.sum(torch.isclose(ab_div_value, ab_entropy_value, atol=1e-7))
+                assert torch.sum(torch.isclose(ab_entropy.predict(batched_uniform_tensor), torch.zeros(batch_size),
+                                               atol=1e-7))
