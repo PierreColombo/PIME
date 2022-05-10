@@ -8,6 +8,7 @@ class AlphaDivergence(DiscreteEstimator):
     def __init__(self, name, alpha):
         self.name = name
         self.alpha = alpha
+        assert alpha != 1 and alpha != 0
 
     def predict(self, X, Y):
         """
@@ -17,7 +18,7 @@ class AlphaDivergence(DiscreteEstimator):
         :return: alpha divergence between the reference and hypothesis distribution
         """
         alpha = self.alpha
-        assert alpha != 1 and alpha != 0
+
         return 1 / (alpha * (alpha - 1)) - torch.sum(X ** alpha * Y ** (1 - alpha), dim=-1) / (
                 alpha * (alpha - 1))
 
