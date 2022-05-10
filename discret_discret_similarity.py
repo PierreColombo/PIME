@@ -8,7 +8,9 @@ from collections import defaultdict, Counter
 
 
 
-class
+class AlphaDivergence(DiscreteEstimator):
+    def __init__(self):
+        pass
 
 class InfoLM:
     def __init__(self, model_name="bert-base-uncased", temperature=0.25, measure_to_use='fisher_rao',

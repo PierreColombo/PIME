@@ -26,7 +26,10 @@ class DiscreteEstimator(ABC):
 class HybridEstimator(ABC):
     def __init__(self, name):
         self.name = name
-        
+
     @abstractmethod
     def predict(self, X, Y):
         pass
+
+if __name__ == '__main__':
+    l = HybridEstimator('toto')
