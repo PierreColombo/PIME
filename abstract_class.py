@@ -30,6 +30,3 @@ class HybridEstimator(ABC):
     @abstractmethod
     def predict(self, X, Y):
         pass
-
-if __name__ == '__main__':
-    l = HybridEstimator('toto')
