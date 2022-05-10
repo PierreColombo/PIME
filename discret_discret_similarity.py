@@ -176,6 +176,36 @@ class DiscreteEntropyEstimator(DiscreteEstimator):
             return self.discret_estimator.predict(X, U)
 
 
+class JeffreySymetrizationEstimator(DiscreteEstimator):
+    def __init__(self, name, discret_estimator, **kwargs):
+        self.name = name
+        self.discret_estimator = discret_estimator(name, **kwargs)
+
+    def predict(self, X, Y=None):
+        """
+        :param X: discreate input reference distribution over the vocabulary
+        :param Y: discreate hypothesis reference distribution over the vocabulary
+        :param alpha: alpha parameter of the divergence
+        :return: alpha divergence between the reference and hypothesis distribution
+        """
+        return (self.discret_estimator.predict(X, Y) + self.discret_estimator.predict(Y, X)) / 2
+
+
+class JensenSymetrizationEstimator(DiscreteEstimator):
+    def __init__(self, name, discret_estimator, **kwargs):
+        self.name = name
+        self.discret_estimator = discret_estimator(name, **kwargs)
+
+    def predict(self, X, Y=None):
+        """
+        :param X: discreate input reference distribution over the vocabulary
+        :param Y: discreate hypothesis reference distribution over the vocabulary
+        :param alpha: alpha parameter of the divergence
+        :return: alpha divergence between the reference and hypothesis distribution
+        """
+        return (self.discret_estimator.predict(Y, (X + Y) / 2) + self.discret_estimator.predict(X, (X + Y) / 2)) / 2
+
+
 if __name__ == '__main__':
     from tqdm import tqdm
 
@@ -185,7 +215,7 @@ if __name__ == '__main__':
     batched_uniform_tensor = uniform_tensor.unsqueeze(0).repeat(batch_size, 1)
 
     random_vector = torch.nn.Softmax(dim=-1)(torch.rand(batch_size, tensor_length))
-    entropy = EntropyEstimator('name', ABDivergence, alpha=1, beta=3)
+    entropy = DiscreteEntropyEstimator('name', ABDivergence, alpha=1, beta=3)
     print(entropy.predict(random_vector, None))
     print(entropy.predict(batched_uniform_tensor, None))
 
@@ -202,7 +232,7 @@ if __name__ == '__main__':
                 batched_uniform_tensor = uniform_tensor.unsqueeze(0).repeat(batch_size, 1)
                 random_vector = torch.nn.Softmax(dim=-1)(torch.rand(batch_size, tensor_length))
                 ab_div = ABDivergence('test_ab_div', alpha=alpha, beta=beta)
-                ab_entropy = EntropyEstimator('test_ab_entropy', ABDivergence, alpha=alpha, beta=beta)
+                ab_entropy = DiscreteEntropyEstimator('test_ab_entropy', ABDivergence, alpha=alpha, beta=beta)
                 ab_div_value = ab_div.predict(random_vector, batched_uniform_tensor)
                 ab_entropy_value = ab_entropy.predict(random_vector, None)
                 assert torch.sum(torch.isclose(ab_div.predict(random_vector, random_vector), torch.zeros(batch_size),
