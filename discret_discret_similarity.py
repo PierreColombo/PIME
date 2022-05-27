@@ -26,7 +26,7 @@ class AlphaDivergence(DiscreteEstimator):
 class LP(DiscreteEstimator):
     def __init__(self, name, power):
         self.name = name
-        self.alpha = power
+        self.power = power
 
     def predict(self, X, Y):
         """
