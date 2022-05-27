@@ -9,173 +9,108 @@ import matplotlib.pyplot as plt
 import time
 import seaborn as sns
 from tensorboardX import SummaryWriter
-
-
+from continuous_estimator_helpers import *
+from abstract_class import ContinuousEstimator
 import torch.nn as nn
-import torch
+from utils import compute_mean, compute_cov
 from geomloss import SamplesLoss
+from continuous_self import *
 
 
-class MultiVariateLoss(nn.Module):
-    def __init__(self, args):
-        super(MultiVariateLoss, self).__init__()
-        assert args.multi_loss_type in ["SINKHORN", "HAUSDORFF", "ENERGY", "GAUSSIAN", "LAPLACIAN", 'RAO', 'FRECHET',
-                                        'JS']
-        self.args = args
-        self.require_learning = False
-        if self.args.multi_loss_type not in ['JS', 'RAO', 'FRECHET']:
-            self.loss = SamplesLoss(loss=self.args.multi_loss_type.lower(), p=self.args.power, blur=self.args.blur)
+################################################
+####### Multivariate Gaussian Hypothesis #######
+################################################
 
-    def compute_var(self, input, mean):
-        return torch.matmul((input - mean).transpose(1, 0), input - mean)
+class MGHClosedJS(ContinuousEstimator):
+    def __init__(self, name):
+        self.name = name
 
-    def compute_mean(self, input):
-        return torch.mean(input, dim=0)
-
-    def forward(self, inputs_embedded, sensitive_labels, public_labels=None):
-        if self.args.multi_loss_type in ['JS', 'RAO', 'FRECHET']:
-            mean_0 = self.compute_mean(inputs_embedded[sensitive_labels == 0])
-            mean_1 = self.compute_mean(inputs_embedded[sensitive_labels == 1])
-            var_0 = self.compute_var(inputs_embedded[sensitive_labels == 0], mean_0)
-            var_1 = self.compute_var(inputs_embedded[sensitive_labels == 1], mean_1)
-        if self.args.multi_loss_type == 'JS':
-            distance = self.js_loss(mean_0, mean_1, var_0, var_1)
-        elif self.args.multi_loss_type == 'RAO':
-            distance = self.rao_loss(mean_0, mean_1, var_0, var_1)
-        elif self.args.multi_loss_type == 'FRECHET':
-            distance = self.frechet_loss(mean_0, mean_1, var_0, var_1)
-        else:
-            distance = self.loss(inputs_embedded[sensitive_labels == 0],
-                                 inputs_embedded[sensitive_labels == 1])
-        return distance
-
-    def js_loss(self, mean_0, mean_1, var_0, var_1):
+    def predict(self, ref_dist, hypo_dist):
+        """
+        :param ref_dist: continuous input reference distribution
+        :param hypo_dist: continuous hypothesis reference distribution
+        :return:  Jensen-Shanon divergence between the reference and hypothesis distribution under
+        the Multivariate Gaussian Hypothesis
+        """
         """
         1/2[log|Σ2|/|Σ1|−𝑑+tr{Σ**0.5Σ1}+(𝜇2−𝜇1)𝑇Σ−12(𝜇2−𝜇1)]
         https://stats.stackexchange.com/questions/60680/kl-divergence-between-two-multivariate-gaussians
         """
-        d = var_1.size(1)
-        var_0 = torch.diag(var_0)
-        var_1 = torch.diag(var_1)
+        d = self.var.size(1)
+        var_0 = torch.diag(self.ref_cov)
+        var_1 = torch.diag(self.hypo_cov)
         log_det_0_det_1 = (torch.sum(torch.log(var_0), dim=0) - torch.sum(torch.log(var_1), dim=0))
         log_det_1_det_0 = (torch.sum(torch.log(var_1), dim=0) - torch.sum(torch.log(var_0), dim=0))
         tr_0_1 = torch.sum(var_0 / var_1)
         tr_1_0 = torch.sum(var_1 / var_0)
-        last_1 = torch.matmul((mean_0 - mean_1) * (var_1 ** (-1)), mean_0 - mean_1)
-        last_0 = torch.matmul((mean_0 - mean_1) * (var_0 ** (-1)), mean_0 - mean_1)
+        last_1 = torch.matmul((self.ref_mean - self.hypo_mean) * (var_1 ** (-1)), self.ref_mean - self.hypo_mean)
+        last_0 = torch.matmul((self.ref_mean - self.hypo_mean) * (var_0 ** (-1)), self.ref_mean - self.hypo_mean)
 
         js = -2 * d + (log_det_0_det_1 + tr_1_0 + last_1 + log_det_1_det_0 + tr_0_1 + last_0)
         return js / 4
 
-    def rao_loss(self, mean_0, mean_1, var_0, var_1):
+    def fit(self, ref_dist, hypo_dist):
+        self.ref_mean = compute_mean(ref_dist)
+        self.ref_cov = compute_cov(ref_dist)
+        self.hypo_mean = compute_mean(hypo_dist)
+        self.hypo_cov = compute_cov(hypo_dist)
+
+
+class MGHClosedRAO(ContinuousEstimator):
+    def __init__(self, name):
+        self.name = name
+
+    def predict(self, ref_dist, hypo_dist):
+        """
+        :param ref_dist: continuous input reference distribution
+        :param hypo_dist: continuous hypothesis reference distribution
+        :return:  Fisher Rao distance between the reference and hypothesis distribution under
+        the Multivariate Gaussian Hypothesis
+        """
         """
         https://www.sciencedirect.com/science/article/pii/S0166218X14004211
         """
         # TODO : handle the case of 0
-        first = (((mean_0 - mean_1) ** 2) / 2 + (
-                torch.sqrt(torch.diag(var_1)) + torch.sqrt(torch.diag(var_0))) ** 2) ** (1 / 2)
-        second = (((mean_0 - mean_1) ** 2) / 2 + (
-                torch.sqrt(torch.diag(var_1)) - torch.sqrt(torch.diag(var_0))) ** 2) ** (1 / 2)
+        first = (((self.ref_mean - self.hypo_mean) ** 2) / 2 + (
+                torch.sqrt(torch.diag(self.hypo_cov)) + torch.sqrt(torch.diag(self.ref_cov))) ** 2) ** (1 / 2)
+        second = (((self.ref_mean - self.hypo_mean) ** 2) / 2 + (
+                torch.sqrt(torch.diag(self.hypo_cov)) - torch.sqrt(torch.diag(self.ref_cov))) ** 2) ** (1 / 2)
         rao = torch.sqrt(torch.sum((torch.log((first + second) / (first - second))) ** 2) * 2)
         return rao
 
-    def frechet_loss(self, mean_0, mean_1, var_0, var_1):
-        var_0 = torch.diag(var_0)
-        var_1 = torch.diag(var_1)
-        return torch.norm(mean_0 - mean_1, p=2) ** 2 + torch.sum(var_0 + var_1 - 2 * (var_0 * var_1) ** (1 / 2
-
-sns.set_style("white")
-sns.set_context("notebook", font_scale=1.5, rc={"lines.linewidth": 4, 'lines.markersize': 10})
+    def fit(self, ref_dist, hypo_dist):
+        self.ref_mean = compute_mean(ref_dist)
+        self.ref_cov = compute_cov(ref_dist)
+        self.hypo_mean = compute_mean(hypo_dist)
+        self.hypo_cov = compute_cov(hypo_dist)
 
 
-def control_weights(model):
-    def init_weights(m):
-        if hasattr(m, 'weight') and hasattr(m.weight, 'uniform_') and True:
-            torch.nn.init.uniform_(m.weight, a=-0.01, b=0.01)
+class MGHClosedFRECHET(ContinuousEstimator):
+    def __init__(self, name):
+        self.name = name
 
-    model.apply(init_weights)
+    def predict(self, ref_dist, hypo_dist):
+        """
+        :param ref_dist: continuous input reference distribution
+        :param hypo_dist: continuous hypothesis reference distribution
+        :return:  Frechet distance between the reference and hypothesis distribution under
+        the Multivariate Gaussian Hypothesis
+        """
+        var_0 = torch.diag(self.ref_cov)
+        var_1 = torch.diag(self.hypo_cov)
+        return torch.norm(self.ref_mean - self.hypo_mean, p=2) ** 2 + torch.sum(
+            var_0 + var_1 - 2 * (var_0 * var_1) ** (1 / 2))
 
-
-class FF_DOE(nn.Module):
-
-    def __init__(self, dim_input, dim_output, dropout_rate=0):
-        super(FF_DOE, self).__init__()
-        self.residual_connection = False
-        self.num_layers = 1
-        self.layer_norm = True
-        self.activation = 'tanh'
-        self.stack = nn.ModuleList()
-        for l in range(self.num_layers):
-            layer = []
-
-            if self.layer_norm:
-                layer.append(nn.LayerNorm(dim_input))
-
-            layer.append(nn.Linear(dim_input, dim_output))
-            layer.append({'tanh': nn.Tanh(), 'relu': nn.ReLU()}[self.activation])
-            layer.append(nn.Dropout(dropout_rate))
-
-            self.stack.append(nn.Sequential(*layer))
-
-        self.out = nn.Linear(dim_output, dim_output)
-
-    def forward(self, x):
-        for layer in self.stack:
-            x = layer(x)
-        return self.out(x)
+    def fit(self, ref_dist, hypo_dist):
+        self.ref_mean = compute_mean(ref_dist)
+        self.ref_cov = compute_cov(ref_dist)
+        self.hypo_mean = compute_mean(hypo_dist)
+        self.hypo_cov = compute_cov(hypo_dist)
 
 
-class ConditionalPDF(nn.Module):
-
-    def __init__(self, dim, hidden, pdf):
-        super(ConditionalPDF, self).__init__()
-        assert pdf in {'gauss', 'logistic'}
-        self.dim = dim
-        self.pdf = pdf
-        self.X2Y = FF_DOE(dim, 2 * dim, 0.2)
-
-    def forward(self, Y, X):
-        mu, ln_var = torch.split(self.X2Y(X), self.dim, dim=1)
-        cross_entropy = compute_negative_ln_prob(Y, mu, ln_var, self.pdf)
-        return cross_entropy
-
-
-def compute_negative_ln_prob(Y, mu, ln_var, pdf):
-    var = ln_var.exp()
-
-    if pdf == 'gauss':
-        negative_ln_prob = 0.5 * ((Y - mu) ** 2 / var).sum(1).mean() + \
-                           0.5 * Y.size(1) * math.log(2 * math.pi) + \
-                           0.5 * ln_var.sum(1).mean()
-
-    elif pdf == 'logistic':
-        whitened = (Y - mu) / var
-        adjust = torch.logsumexp(
-            torch.stack([torch.zeros(Y.size()).to(Y.device), -whitened]), 0)
-        negative_ln_prob = whitened.sum(1).mean() + \
-                           2 * adjust.sum(1).mean() + \
-                           ln_var.sum(1).mean()
-
-    else:
-        raise ValueError('Unknown PDF: %s' % (pdf))
-
-    return negative_ln_prob
-
-
-class PDF(nn.Module):
-
-    def __init__(self, dim, pdf='gauss'):
-        super(PDF, self).__init__()
-        assert pdf in {'gauss', 'logistic'}
-        self.dim = dim
-        self.pdf = pdf
-        self.mu = nn.Embedding(1, self.dim)
-        self.ln_var = nn.Embedding(1, self.dim)  # ln(s) in logistic
-
-    def forward(self, Y):
-        cross_entropy = compute_negative_ln_prob(Y, self.mu.weight,
-                                                 self.ln_var.weight, self.pdf)
-        return cross_entropy
+#############################################
+####### Mutual Information Estimators #######
+#############################################
 
 
 class DOE(nn.Module):
@@ -334,7 +269,7 @@ class TUBA(nn.Module):
         T1 = self.F_func(torch.cat([x_tile, y_tile], dim=-1))  # shape [sample_size, sample_size, 1]
 
         lower_bound = 1 + T0.mean() - log_scores.mean() - (
-                    (T1 - log_scores).logsumexp(dim=1) - np.log(sample_size)).exp().mean()
+                (T1 - log_scores).logsumexp(dim=1) - np.log(sample_size)).exp().mean()
         return lower_bound
 
     def learning_loss(self, x_samples, y_samples):
@@ -388,27 +323,6 @@ class InfoNCE(nn.Module):
 
     def learning_loss(self, x_samples, y_samples):
         return -self.forward(x_samples, y_samples)
-
-
-def log_sum_exp(value, dim=None, keepdim=False):
-    """Numerically stable implementation of the operation
-    value.exp().sum(dim, keepdim).log()
-    """
-    # TODO: torch.max(value, dim=None) threw an error at time of writing
-    if dim is not None:
-        m, _ = torch.max(value, dim=dim, keepdim=True)
-        value0 = value - m
-        if keepdim is False:
-            m = m.squeeze(dim)
-        return m + torch.log(torch.sum(torch.exp(value0),
-                                       dim=dim, keepdim=keepdim))
-    else:
-        m = torch.max(value)
-        sum_exp = torch.sum(torch.exp(value - m))
-        if isinstance(sum_exp, torch.NumberType):
-            return m + math.log(sum_exp)
-        else:
-            return m + torch.log(sum_exp)
 
 
 class L1OutUB(nn.Module):  # naive upper bound
@@ -483,187 +397,7 @@ class VarUB(nn.Module):  # variational upper bound
         return - self.loglikeli(x_samples, y_samples)
 
 
-class MultiGaussKernelEE(nn.Module):
-    def __init__(self, device, number_of_samples, hidden_size,
-                 # [K, d] to initialize the kernel :) so K is the number of points :)
-                 average='weighted',  # un
-                 cov_diagonal='var',  # diagonal of the covariance
-                 cov_off_diagonal='var',  # var
-                 ):
-
-        self.K, self.d = number_of_samples, hidden_size
-        super(MultiGaussKernelEE, self).__init__()
-        self.device = device
-
-        # base_samples.requires_grad = False
-        # if kernel_positions in ('fixed', 'free'):
-        #    self.mean = base_samples[None, :, :].to(self.args.device)
-        # else:
-        #    self.mean = base_samples[None, None, :, :].to(self.args.device)  # [1, 1, K, d]
-
-        # self.K = K
-        # self.d = d
-        self.joint = False
-
-        self.logC = torch.tensor([-self.d / 2 * np.log(2 * np.pi)]).to(
-            self.device)
-
-        self.means = nn.Parameter(torch.rand(number_of_samples, hidden_size), requires_grad=True).to(
-            self.device)
-        if cov_diagonal == 'const':
-            diag = torch.ones((1, 1, self.d))
-        elif cov_diagonal == 'var':
-            diag = torch.ones((1, self.K, self.d))
-        else:
-            assert False, f'Invalid cov_diagonal: {cov_diagonal}'
-        self.diag = nn.Parameter(diag.to(self.device))
-
-        if cov_off_diagonal == 'var':
-            tri = torch.zeros((1, self.K, self.d, self.d))
-            self.tri = nn.Parameter(tri.to(self.device))
-        elif cov_off_diagonal == 'zero':
-            self.tri = None
-        else:
-            assert False, f'Invalid cov_off_diagonal: {cov_off_diagonal}'
-
-        self.weigh = torch.ones((1, self.K), requires_grad=False).to(self.device)
-        if average == 'weighted':
-            self.weigh = nn.Parameter(self.weigh, requires_grad=True)
-        else:
-            assert average == 'fixed', f"Invalid average: {average}"
-
-    def logpdf(self, x, y=None):
-        assert len(x.shape) == 2 and x.shape[1] == self.d, 'x has to have shape [N, d]'
-        x = x[:, None, :]
-        w = torch.log_softmax(self.weigh, dim=1)
-        y = x - self.means
-        if self.tri is not None:
-            y = y * self.diag + torch.squeeze(torch.matmul(torch.tril(self.tri, diagonal=-1), y[:, :, :, None]), 3)
-        else:
-            y = y * self.diag
-        y = torch.sum(y ** 2, dim=2)
-
-        y = -y / 2 + torch.sum(torch.log(torch.abs(self.diag)), dim=2) + w
-        if self.joint:
-            y = torch.log(torch.sum(torch.exp(y), dim=-1) / 2)
-        else:
-            y = torch.logsumexp(y, dim=-1)
-        return self.logC + y
-
-    def learning_loss(self, x_samples, y=None):
-        return -self.forward(x_samples)
-
-    def update_parameters(self, kernel_dict):
-        tri = []
-        means = []
-        weigh = []
-        diag = []
-        for key, value in kernel_dict.items():  # detach and clone
-            tri.append(copy.deepcopy(value.tri.detach().clone()))
-            means.append(copy.deepcopy(value.means.detach().clone()))
-            weigh.append(copy.deepcopy(value.weigh.detach().clone()))
-            diag.append(copy.deepcopy(value.diag.detach().clone()))
-
-        self.tri = nn.Parameter(torch.cat(tri, dim=1), requires_grad=True).to(self.device)
-        self.means = nn.Parameter(torch.cat(means, dim=0), requires_grad=True).to(self.device)
-        self.weigh = nn.Parameter(torch.cat(weigh, dim=-1), requires_grad=True).to(self.device)
-        self.diag = nn.Parameter(torch.cat(diag, dim=1), requires_grad=True).to(self.device)
-
-    def pdf(self, x):
-        return torch.exp(self.logpdf(x))
-
-    def forward(self, x, y=None):
-        y = torch.abs(-self.logpdf(x))
-        return torch.mean(y)
-
-
-class FF(nn.Module):
-
-    def __init__(self, dim_input, dim_hidden, dim_output, num_layers,
-                 activation='relu', dropout_rate=0, layer_norm=False,
-                 residual_connection=False):
-        super(FF, self).__init__()
-        assert (not residual_connection) or (dim_hidden == dim_input)
-        self.residual_connection = residual_connection
-
-        self.stack = nn.ModuleList()
-        for l in range(num_layers):
-            layer = []
-
-            if layer_norm:
-                layer.append(nn.LayerNorm(dim_input if l == 0 else dim_hidden))
-
-            layer.append(nn.Linear(dim_input if l == 0 else dim_hidden,
-                                   dim_hidden))
-            layer.append({'tanh': nn.Tanh(), 'relu': nn.ReLU()}[activation])
-            layer.append(nn.Dropout(dropout_rate))
-
-            self.stack.append(nn.Sequential(*layer))
-
-        self.out = nn.Linear(dim_input if num_layers < 1 else dim_hidden,
-                             dim_output)
-
-    def forward(self, x):
-        for layer in self.stack:
-            x = x + layer(x) if self.residual_connection else layer(x)
-        return self.out(x)
-
-
-class MultiGaussKernelCondEE(nn.Module):
-
-    def __init__(self, device,
-                 number_of_samples,  # [K, d]
-                 x_size, y_size,
-                 layers=1,
-                 ):
-        super(MultiGaussKernelCondEE, self).__init__()
-        self.K, self.d = number_of_samples, y_size
-        self.device = device
-
-        self.logC = torch.tensor([-self.d / 2 * np.log(2 * np.pi)]).to(self.device)
-
-        # mean_weight = 10 * (2 * torch.eye(K) - torch.ones((K, K)))
-        # mean_weight = _c(mean_weight[None, :, :, None])  # [1, K, K, 1]
-        # self.mean_weight = nn.Parameter(mean_weight, requires_grad=True)
-
-        self.std = FF(self.d, self.d * 2, self.K, layers)
-        self.weight = FF(self.d, self.d * 2, self.K, layers)
-        # self.mean_weight = FF(d, hidden, K**2, layers)
-        self.mean_weight = FF(self.d, self.d * 2, self.K * x_size, layers)
-        self.x_size = x_size
-
-    def _get_mean(self, y):
-        # mean_weight = self.mean_weight(y).reshape((-1, self.K, self.K, 1))  # [N, K, K, 1]
-        # means = torch.sum(torch.softmax(mean_weight, dim=2) * self.base_X, dim=2)  #[1, K, d]
-        means = self.mean_weight(y).reshape((-1, self.K, self.x_size))  # [N, K, d]
-        return means
-
-    def logpdf(self, x, y):  # H(X|Y)
-        # for data in (x, y):
-        # assert len(data.shape) == 2 and data.shape[1] == self.d, 'x has to have shape [N, d]'
-        # assert x.shape == y.shape, "x and y need to have the same shape"
-
-        x = x[:, None, :]  # [N, 1, d]
-
-        w = torch.log_softmax(self.weight(y), dim=-1)  # [N, K]
-        std = self.std(y).exp()  # [N, K]
-        # std = self.std(y)  # [N, K]
-        mu = self._get_mean(y)  # [1, K, d]
-
-        y = x - mu  # [N, K, d]
-        y = std ** 2 * torch.sum(y ** 2, dim=2)  # [N, K]
-
-        y = -y / 2 + self.d * torch.log(torch.abs(std)) + w
-        y = torch.logsumexp(y, dim=-1)
-        return self.logC + y
-
-    def pdf(self, x, y):
-        return torch.exp(self.logpdf(x, y))
-
-    def forward(self, x, y):
-        z = -self.logpdf(x, y)
-        return torch.mean(z)
-
+# Estimating MI as a difference of Continous Entropy
 
 class MIKernelEstimator(nn.Module):
     def __init__(self, device, number_of_samples, x_size, y_size,
