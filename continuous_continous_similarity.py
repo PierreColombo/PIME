@@ -16,7 +16,6 @@ from utils import compute_mean, compute_cov
 from geomloss import SamplesLoss
 from continuous_self import *
 
-
 ################################################
 ####### Multivariate Gaussian Hypothesis #######
 ################################################
