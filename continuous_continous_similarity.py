@@ -16,6 +16,7 @@ from utils import compute_mean, compute_cov
 from geomloss import SamplesLoss
 from continuous_self import *
 
+
 ################################################
 ####### Multivariate Gaussian Hypothesis #######
 ################################################
@@ -35,7 +36,7 @@ class MGHClosedJS(ContinuousEstimator):
         1/2[log|Σ2|/|Σ1|−𝑑+tr{Σ**0.5Σ1}+(𝜇2−𝜇1)𝑇Σ−12(𝜇2−𝜇1)]
         https://stats.stackexchange.com/questions/60680/kl-divergence-between-two-multivariate-gaussians
         """
-        d = self.var.size(1)
+        d = self.ref_cov.size(1)
         var_0 = torch.diag(self.ref_cov)
         var_1 = torch.diag(self.hypo_cov)
         log_det_0_det_1 = (torch.sum(torch.log(var_0), dim=0) - torch.sum(torch.log(var_1), dim=0))
@@ -112,25 +113,24 @@ class MGHClosedFRECHET(ContinuousEstimator):
 #############################################
 
 
-class DOE(nn.Module):
+class MGHClosedMI(ContinuousEstimator):
+    def __init__(self, name):
+        self.name = name
 
-    def __init__(self, dim, hidden, pdf='gauss'):
-        super(DOE, self).__init__()
-        self.qY = PDF(dim, pdf)
-        self.qY_X = ConditionalPDF(dim, hidden, pdf)
+    def predict(self, ref_dist, hypo_dist):
+        """
+        :param ref_dist: continuous input reference distribution
+        :param hypo_dist: continuous hypothesis reference distribution
+        :return:  MI between the reference and hypothesis distribution under
+        the Multivariate Gaussian Hypothesis
+        https://stats.stackexchange.com/questions/438607/mutual-information-between-subsets-of-variables-in-the-multivariate-normal-distr
+        """
+        raise NotImplemented
 
-    def learning_loss(self, X, Y):
-        hY = self.qY(Y)
-        hY_X = self.qY_X(Y, X)
+    def fit(self, ref_dist, hypo_dist):
+        self.ref_cov = compute_cov(ref_dist)
+        self.hypo_cov = compute_cov(hypo_dist)
 
-        loss = hY + hY_X
-        return loss
-
-    def forward(self, X, Y):
-        hY = self.qY(Y)
-        hY_X = self.qY_X(Y, X)
-
-        return hY - hY_X
 
 
 class CLUB(nn.Module):  # CLUB: Mutual Information Contrastive Learning Upper Bound
@@ -448,238 +448,355 @@ class MIKernelEstimator(nn.Module):
             return hz_1 + hz_g1
 
 
-import torch.nn as nn
-import torch
-import numpy as np
-from torch.distributions import MultivariateNormal
 
 
-def sample_correlated_gaussian(rho=0.5, dim=20, batch_size=128, to_cuda=False, cubic=False):
-    """Generate samples from a correlated Gaussian distribution."""
-    mean = [0, 0]
-    cov = [[1.0, rho], [rho, 1.0]]
-    x, y = np.random.multivariate_normal(mean, cov, batch_size * dim).T
 
-    x = x.reshape(-1, dim)
-    y = y.reshape(-1, dim)
+class DOE(nn.Module):
+    def __init__(self, dim, hidden, pdf='gauss'):
+        """
+        paper from
+        :param dim:
+        :param hidden:
+        :param pdf:
+        """
+        super(DOE, self).__init__()
+        self.qY = PDF(dim, pdf)
+        self.qY_X = ConditionalPDF(dim, hidden, pdf)
 
-    if cubic:
-        y = y ** 3
+    def learning_loss(self, X, Y):
+        hY = self.qY(Y)
+        hY_X = self.qY_X(Y, X)
 
-    if to_cuda:
-        x = torch.from_numpy(x).float().cuda()
-        # x = torch.cat([x, torch.randn_like(x).cuda() * 0.3], dim=-1)
-        y = torch.from_numpy(y).float().cuda()
-    return x, y
+        loss = hY + hY_X
+        return loss
 
+    def forward(self, X, Y):
+        hY = self.qY(Y)
+        hY_X = self.qY_X(Y, X)
 
-def rho_to_mi(rho, dim):
-    result = -dim / 2 * np.log(1 - rho ** 2)
-    return result
-
-
-def mi_to_rho(mi, dim):
-    result = np.sqrt(1 - np.exp(-2 * mi / dim))
-    return result
+        return hY - hY_X
 
 
-import random
+class MultiGaussKernelEE(nn.Module):
+    def __init__(self, device, number_of_samples, hidden_size,
+                 # [K, d] to initialize the kernel :) so K is the number of points :)
+                 average='weighted',  # un
+                 cov_diagonal='var',  # diagonal of the covariance
+                 cov_off_diagonal='var',  # var
+                 ):
 
+        self.K, self.d = number_of_samples, hidden_size
+        super(MultiGaussKernelEE, self).__init__()
+        self.device = device
 
-def set_seed(seed):
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed_all(seed)
+        # base_samples.requires_grad = False
+        # if kernel_positions in ('fixed', 'free'):
+        #    self.mean = base_samples[None, :, :].to(self.args.device)
+        # else:
+        #    self.mean = base_samples[None, None, :, :].to(self.args.device)  # [1, 1, K, d]
 
+        # self.K = K
+        # self.d = d
+        self.joint = False
 
-def main(cubic=True):
-    # import os
-    # os.environ['CUDA_VISIBLE_DEVICES'] = '2'
+        self.logC = torch.tensor([-self.d / 2 * np.log(2 * np.pi)]).to(
+            self.device)
 
-    for seed in [1, 2, 3, 4, 5, 6, 7, 8]:
-        set_seed(seed)
-        lambda_ = 2
-
-        if torch.cuda.is_available():
-            device = torch.device('cuda')
+        self.means = nn.Parameter(torch.rand(number_of_samples, hidden_size), requires_grad=True).to(
+            self.device)
+        if cov_diagonal == 'const':
+            diag = torch.ones((1, 1, self.d))
+        elif cov_diagonal == 'var':
+            diag = torch.ones((1, self.K, self.d))
         else:
-            device = torch.device('cpu')
-        suffix = '9.07_{}_{}_{}'.format(cubic, lambda_, seed)
+            assert False, f'Invalid cov_diagonal: {cov_diagonal}'
+        self.diag = nn.Parameter(diag.to(self.device))
 
-        sample_dim = 20
-        batch_size = 128
-        hidden_size = 15
-        learning_rate = 0.001
-        training_steps = 5000
-        model_list = ["TUBA", "KNIFE"]  # CLUBSample
+        if cov_off_diagonal == 'var':
+            tri = torch.zeros((1, self.K, self.d, self.d))
+            self.tri = nn.Parameter(tri.to(self.device))
+        elif cov_off_diagonal == 'zero':
+            self.tri = None
+        else:
+            assert False, f'Invalid cov_off_diagonal: {cov_off_diagonal}'
 
-        mi_list = [2.0, 4.0, 6.0, 8.0, 10.0]  # , 12.0, 14.0, 16.0, 18.0, 20.0]
+        self.weigh = torch.ones((1, self.K), requires_grad=False).to(self.device)
+        if average == 'weighted':
+            self.weigh = nn.Parameter(self.weigh, requires_grad=True)
+        else:
+            assert average == 'fixed', f"Invalid average: {average}"
 
-        total_steps = training_steps * len(mi_list)
+    def logpdf(self, x, y=None):
+        assert len(x.shape) == 2 and x.shape[1] == self.d, 'x has to have shape [N, d]'
+        x = x[:, None, :]
+        w = torch.log_softmax(self.weigh, dim=1)
+        y = x - self.means
+        if self.tri is not None:
+            y = y * self.diag + torch.squeeze(torch.matmul(torch.tril(self.tri, diagonal=-1), y[:, :, :, None]), 3)
+        else:
+            y = y * self.diag
+        y = torch.sum(y ** 2, dim=2)
 
-        # train MI estimators with samples
+        y = -y / 2 + torch.sum(torch.log(torch.abs(self.diag)), dim=2) + w
+        if self.joint:
+            y = torch.log(torch.sum(torch.exp(y), dim=-1) / 2)
+        else:
+            y = torch.logsumexp(y, dim=-1)
+        return self.logC + y
 
-        # train MI estimators with samples
+    def learning_loss(self, x_samples, y=None):
+        return -self.forward(x_samples)
 
-        mi_results = dict()
-        for model_name in tqdm(model_list, 'Models'):
-            if model_name == 'Kernel_F':
-                model = MIKernelEstimator(device, sample_dim // 2, sample_dim).to(device)
-            elif model_name == 'KNIFE':
-                model = MIKernelEstimator(device, batch_size // 6, sample_dim, sample_dim, use_joint=True).to(device)
-            elif model_name == 'DOE':
-                model = eval(model_name)(sample_dim, sample_dim).to(device)
-            else:
-                model = eval(model_name)(sample_dim, sample_dim, hidden_size).to(device)
-            optimizer = torch.optim.Adam(model.parameters(), learning_rate)
+    def update_parameters(self, kernel_dict):
+        tri = []
+        means = []
+        weigh = []
+        diag = []
+        for key, value in kernel_dict.items():  # detach and clone
+            tri.append(copy.deepcopy(value.tri.detach().clone()))
+            means.append(copy.deepcopy(value.means.detach().clone()))
+            weigh.append(copy.deepcopy(value.weigh.detach().clone()))
+            diag.append(copy.deepcopy(value.diag.detach().clone()))
 
-            mi_est_values = []
+        self.tri = nn.Parameter(torch.cat(tri, dim=1), requires_grad=True).to(self.device)
+        self.means = nn.Parameter(torch.cat(means, dim=0), requires_grad=True).to(self.device)
+        self.weigh = nn.Parameter(torch.cat(weigh, dim=-1), requires_grad=True).to(self.device)
+        self.diag = nn.Parameter(torch.cat(diag, dim=1), requires_grad=True).to(self.device)
 
-            start_time = time.time()
-            for mi_value in tqdm(mi_list, 'MI'):
-                rho = mi_to_rho(mi_value, sample_dim)
+    def pdf(self, x):
+        return torch.exp(self.logpdf(x))
 
-                for step in tqdm(range(training_steps), 'Training Loop', position=0, leave=True):
-                    batch_x, batch_y = sample_correlated_gaussian(rho, dim=sample_dim, batch_size=batch_size,
-                                                                  to_cuda=torch.cuda.is_available(), cubic=cubic)
-                    batch_x = torch.tensor(batch_x).float().to(device)
-                    batch_y = torch.tensor(batch_y).float().to(device)
-                    model.eval()
-                    mi_est_values.append(model(batch_x, batch_y).item())
-
-                    model.train()
-
-                    model_loss = model.learning_loss(batch_x, batch_y)
-
-                    optimizer.zero_grad()
-                    model_loss.backward()
-                    optimizer.step()
-
-                    del batch_x, batch_y
-                    if torch.cuda.is_available():
-                        torch.cuda.empty_cache()
-
-                print("finish training for %s with true MI value = %f" % (model.__class__.__name__, mi_value))
-                # torch.save(model.state_dict(), "./model/%s_%d.pt" % (model.__class__.__name__, int(mi_value)))
-
-                if torch.cuda.is_available():
-                    torch.cuda.empty_cache()
-            end_time = time.time()
-            time_cost = end_time - start_time
-            print("model %s average time cost is %f s" % (model_name, time_cost / total_steps))
-            mi_results[model_name] = mi_est_values
-
-        import seaborn as sns
-        import pandas as pd
-
-        colors = sns.color_palette()
-
-        EMA_SPAN = 200
-
-        ncols = len(model_list)
-        nrows = 1
-        fig, axs = plt.subplots(nrows, ncols, figsize=(3.1 * ncols, 3.4 * nrows))
-        axs = np.ravel(axs)
-
-        xaxis = np.array(list(range(total_steps)))
-        yaxis_mi = np.repeat(mi_list, training_steps)
-
-        for i, model_name in enumerate(model_list):
-            plt.sca(axs[i])
-            p1 = plt.plot(mi_results[model_name], alpha=0.4, color=colors[0])[0]  # color = 5 or 0
-            plt.locator_params(axis='y', nbins=5)
-            plt.locator_params(axis='x', nbins=4)
-            mis_smooth = pd.Series(mi_results[model_name]).ewm(span=EMA_SPAN).mean()
-
-            if i == 0:
-                plt.plot(mis_smooth, c=p1.get_color(), label='$\\hat{I}$')
-                plt.plot(yaxis_mi, color='k', label='True')
-                plt.xlabel('Steps', fontsize=25)
-                plt.ylabel('MI', fontsize=25)
-                plt.legend(loc='upper left', prop={'size': 15})
-            else:
-                plt.plot(mis_smooth, c=p1.get_color())
-                plt.yticks([])
-                plt.plot(yaxis_mi, color='k')
-                plt.xlabel('Steps', fontsize=25)
-
-            plt.ylim(0, 15.5)
-            plt.xlim(0, total_steps)
-            plt.title(model_name, fontsize=35)
-            import matplotlib.ticker as ticker
-
-            ax = plt.gca()
-            ax.xaxis.set_major_formatter(ticker.EngFormatter())
-            plt.xticks(horizontalalignment="right")
-            # plt.subplots_adjust( )
-
-        plt.gcf().tight_layout()
-        plt.savefig('mi_est_Gaussian_{}_copy.pdf'.format(suffix), bbox_inches=None)
-        # plt.show()
-
-        print('Second part')
-
-        bias_dict = dict()
-        var_dict = dict()
-        mse_dict = dict()
-        for i, model_name in tqdm(enumerate(model_list)):
-            bias_list = []
-            var_list = []
-            mse_list = []
-            for j in range(len(mi_list)):
-                mi_est_values = mi_results[model_name][training_steps * (j + 1) - 500:training_steps * (j + 1)]
-                est_mean = np.mean(mi_est_values)
-                bias_list.append(np.abs(mi_list[j] - est_mean))
-                var_list.append(np.var(mi_est_values))
-                mse_list.append(bias_list[j] ** 2 + var_list[j])
-            bias_dict[model_name] = bias_list
-            var_dict[model_name] = var_list
-            mse_dict[model_name] = mse_list
-
-        # %%
-
-        plt.style.use('default')  # ('seaborn-notebook')
-
-        colors = list(plt.rcParams['axes.prop_cycle'])
-        col_idx = [2, 4, 5, 1, 3, 0, 6, 7]
-
-        ncols = 1
-        nrows = 3
-        fig, axs = plt.subplots(nrows, ncols, figsize=(4.5 * ncols, 3. * nrows))
-        axs = np.ravel(axs)
-
-        for i, model_name in enumerate(model_list):
-            plt.sca(axs[0])
-            plt.plot(mi_list, bias_dict[model_name], label=model_name, marker='d', color=colors[col_idx[i]]["color"])
-
-            plt.sca(axs[1])
-            plt.plot(mi_list, var_dict[model_name], label=model_name, marker='d', color=colors[col_idx[i]]["color"])
-
-            plt.sca(axs[2])
-            plt.plot(mi_list, mse_dict[model_name], label=model_name, marker='d', color=colors[col_idx[i]]["color"])
-
-        ylabels = ['Bias', 'Variance', 'MSE']
-        for i in range(3):
-            plt.sca(axs[i])
-            plt.ylabel(ylabels[i], fontsize=15)
-
-            if i == 0:
-                if cubic:
-                    plt.title('Cubic', fontsize=17)
-                else:
-                    plt.title('Gaussian', fontsize=17)
-            if i == 1:
-                plt.yscale('log')
-            if i == 2:
-                plt.legend(loc='upper left', prop={'size': 12})
-                plt.xlabel('MI Values', fontsize=15)
-
-        plt.gcf().tight_layout()
-        plt.savefig('bias_variance_Gaussian_{}.pdf'.format(suffix), bbox_inches='tight')
-        # plt.show()
+    def forward(self, x, y=None):
+        y = torch.abs(-self.logpdf(x))
+        return torch.mean(y)
 
 
-if __name__ == '__main__':
-    main()
+class MultiGaussKernelCondEE(nn.Module):
+
+    def __init__(self, device,
+                 number_of_samples,  # [K, d]
+                 x_size, y_size,
+                 layers=1,
+                 ):
+        super(MultiGaussKernelCondEE, self).__init__()
+        self.K, self.d = number_of_samples, y_size
+        self.device = device
+
+        self.logC = torch.tensor([-self.d / 2 * np.log(2 * np.pi)]).to(self.device)
+
+        # mean_weight = 10 * (2 * torch.eye(K) - torch.ones((K, K)))
+        # mean_weight = _c(mean_weight[None, :, :, None])  # [1, K, K, 1]
+        # self.mean_weight = nn.Parameter(mean_weight, requires_grad=True)
+
+        self.std = FF(self.d, self.d * 2, self.K, layers)
+        self.weight = FF(self.d, self.d * 2, self.K, layers)
+        # self.mean_weight = FF(d, hidden, K**2, layers)
+        self.mean_weight = FF(self.d, self.d * 2, self.K * x_size, layers)
+        self.x_size = x_size
+
+    def _get_mean(self, y):
+        # mean_weight = self.mean_weight(y).reshape((-1, self.K, self.K, 1))  # [N, K, K, 1]
+        # means = torch.sum(torch.softmax(mean_weight, dim=2) * self.base_X, dim=2)  #[1, K, d]
+        means = self.mean_weight(y).reshape((-1, self.K, self.x_size))  # [N, K, d]
+        return means
+
+    def logpdf(self, x, y):  # H(X|Y)
+        # for data in (x, y):
+        # assert len(data.shape) == 2 and data.shape[1] == self.d, 'x has to have shape [N, d]'
+        # assert x.shape == y.shape, "x and y need to have the same shape"
+
+        x = x[:, None, :]  # [N, 1, d]
+
+        w = torch.log_softmax(self.weight(y), dim=-1)  # [N, K]
+        std = self.std(y).exp()  # [N, K]
+        # std = self.std(y)  # [N, K]
+        mu = self._get_mean(y)  # [1, K, d]
+
+        y = x - mu  # [N, K, d]
+        y = std ** 2 * torch.sum(y ** 2, dim=2)  # [N, K]
+
+        y = -y / 2 + self.d * torch.log(torch.abs(std)) + w
+        y = torch.logsumexp(y, dim=-1)
+        return self.logC + y
+
+    def pdf(self, x, y):
+        return torch.exp(self.logpdf(x, y))
+
+    def forward(self, x, y):
+        z = -self.logpdf(x, y)
+        return torch.mean(z)
+
+
+
+# CLEAN Differential entropy
+
+
+class KNIFE(nn.Module):
+    def __init__(self, args, zc_dim, zd_dim):
+        super(KNIFE, self).__init__()
+        self.kernel_marg = MargKernel(args, zc_dim, zd_dim)
+        self.kernel_cond = CondKernel(args, zc_dim, zd_dim)
+
+    def forward(self, z_c, z_d):  # samples have shape [sample_size, dim]
+        marg_ent = self.kernel_marg(z_d)
+        cond_ent = self.kernel_cond(z_c, z_d)
+        return marg_ent - cond_ent, marg_ent, cond_ent
+
+    def learning_loss(self, z_c, z_d):
+        marg_ent = self.kernel_marg(z_d)
+        cond_ent = self.kernel_cond(z_c, z_d)
+        return marg_ent + cond_ent
+
+    def I(self, *args, **kwargs):
+        return self.forward(*args[:2], **kwargs)[0]
+
+
+class MargKernel(nn.Module):
+    def __init__(self, args, zc_dim, zd_dim, init_samples=None):
+
+        self.optimize_mu = args.optimize_mu
+        self.K = args.marg_modes if self.optimize_mu else args.batch_size
+        self.d = zc_dim
+        self.use_tanh = args.use_tanh
+        self.init_std = args.init_std
+        super(MargKernel, self).__init__()
+
+        self.logC = torch.tensor([-self.d / 2 * np.log(2 * np.pi)])
+
+        if init_samples is None:
+            init_samples = self.init_std * torch.randn(self.K, self.d)
+        # self.means = nn.Parameter(torch.rand(self.K, self.d), requires_grad=True)
+        if self.optimize_mu:
+            self.means = nn.Parameter(init_samples, requires_grad=True)  # [K, db]
+        else:
+            self.means = nn.Parameter(init_samples, requires_grad=False)
+
+        if args.cov_diagonal == 'var':
+            diag = self.init_std * torch.randn((1, self.K, self.d))
+        else:
+            diag = self.init_std * torch.randn((1, 1, self.d))
+        self.logvar = nn.Parameter(diag, requires_grad=True)
+
+        if args.cov_off_diagonal == 'var':
+            tri = self.init_std * torch.randn((1, self.K, self.d, self.d))
+            tri = tri.to(init_samples.dtype)
+            self.tri = nn.Parameter(tri, requires_grad=True)
+        else:
+            self.tri = None
+
+        weigh = torch.ones((1, self.K))
+        if args.average == 'var':
+            self.weigh = nn.Parameter(weigh, requires_grad=True)
+        else:
+            self.weigh = nn.Parameter(weigh, requires_grad=False)
+
+    def logpdf(self, x):
+        assert len(x.shape) == 2 and x.shape[1] == self.d, 'x has to have shape [N, d]'
+        x = x[:, None, :]
+        w = torch.log_softmax(self.weigh, dim=1)
+        y = x - self.means
+        logvar = self.logvar
+        if self.use_tanh:
+            logvar = logvar.tanh()
+        var = logvar.exp()
+        y = y * var
+        # print(f"Marg : {var.min()} | {var.max()} | {var.mean()}")
+        if self.tri is not None:
+            y = y + torch.squeeze(torch.matmul(torch.tril(self.tri, diagonal=-1), y[:, :, :, None]), 3)
+        y = torch.sum(y ** 2, dim=2)
+
+        y = -y / 2 + torch.sum(torch.log(torch.abs(var) + 1e-8), dim=-1) + w
+        y = torch.logsumexp(y, dim=-1)
+        return self.logC.to(y.device) + y
+
+    def update_parameters(self, z):
+        self.means = z
+
+    def forward(self, x):
+        y = -self.logpdf(x)
+        return torch.mean(y)
+
+
+class CondKernel(nn.Module):
+
+    def __init__(self, args, zc_dim, zd_dim, layers=1):
+        super(CondKernel, self).__init__()
+        self.K, self.d = args.cond_modes, zd_dim
+        self.use_tanh = args.use_tanh
+        self.logC = torch.tensor([-self.d / 2 * np.log(2 * np.pi)])
+
+        self.mu = FF(args, self.d, self.d, self.K * self.d)
+        self.logvar = FF(args, self.d, self.d, self.K * self.d)
+
+        self.weight = FF(args, self.d, self.d, self.K)
+        self.tri = None
+        if args.cov_off_diagonal == 'var':
+            self.tri = FF(args, self.d, self.d, self.K * self.d * self.d)
+        self.zc_dim = zc_dim
+
+    def logpdf(self, z_c, z_d):  # H(X|Y)
+
+        z_d = z_d[:, None, :]  # [N, 1, d]
+
+        w = torch.log_softmax(self.weight(z_c), dim=-1)  # [N, K]
+        mu = self.mu(z_c)
+        logvar = self.logvar(z_c)
+        if self.use_tanh:
+            logvar = logvar.tanh()
+        var = logvar.exp().reshape(-1, self.K, self.d)
+        mu = mu.reshape(-1, self.K, self.d)
+        # print(f"Cond : {var.min()} | {var.max()} | {var.mean()}")
+
+        z = z_d - mu  # [N, K, d]
+        z = var * z
+        if self.tri is not None:
+            tri = self.tri(z_c).reshape(-1, self.K, self.d, self.d)
+            z = z + torch.squeeze(torch.matmul(torch.tril(tri, diagonal=-1), z[:, :, :, None]), 3)
+        z = torch.sum(z ** 2, dim=-1)  # [N, K]
+
+        z = -z / 2 + torch.log(torch.abs(var) + 1e-8).sum(-1) + w
+        z = torch.logsumexp(z, dim=-1)
+        return self.logC.to(z.device) + z
+
+    def forward(self, z_c, z_d):
+        z = -self.logpdf(z_c, z_d)
+        return torch.mean(z)
+
+
+class DoE(nn.Module):
+    def __init__(self, args, zc_dim, zd_dim):
+        super(DoE, self).__init__()
+        self.qY = PDF(zd_dim, 'gauss')
+        self.qY_X = ConditionalPDF(args, zd_dim, zd_dim, 'gauss')
+
+    def forward(self, z_c, z_d):  # samples have shape [sample_size, dim]
+        # shuffle and concatenate
+        hY = self.qY(z_d)
+        hY_X = self.qY_X(z_d, z_c)
+        mi = hY - hY_X
+        return mi, hY, hY_X
+
+    def learning_loss(self, z_c, z_d):
+        hY = self.qY(z_d)
+        hY_X = self.qY_X(z_d, z_c)
+        loss = hY + hY_X
+        return loss
+
+
+class ConditionalPDF(nn.Module):
+
+    def __init__(self, args, dim, hidden, pdf):
+        super(ConditionalPDF, self).__init__()
+        assert pdf in {'gauss', 'logistic'}
+        self.dim = dim
+        self.pdf = pdf
+        self.X2Y = FF(args, dim, hidden, 2 * dim)
+
+    def forward(self, Y, X):
+        mu, ln_var = torch.split(self.X2Y(X), self.dim, dim=1)
+        cross_entropy = compute_negative_ln_prob(Y, mu, ln_var, self.pdf)
+        return cross_entropy
+
+
+
+

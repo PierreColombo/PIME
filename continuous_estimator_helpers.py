@@ -34,6 +34,7 @@ class FF(nn.Module):
             x = x + layer(x) if self.residual_connection else layer(x)
         return self.out(x)
 
+
 class PDF(nn.Module):
 
     def __init__(self, dim, pdf='gauss'):
@@ -113,4 +114,19 @@ class ConditionalPDF(nn.Module):
     def forward(self, Y, X):
         mu, ln_var = torch.split(self.X2Y(X), self.dim, dim=1)
         cross_entropy = compute_negative_ln_prob(Y, mu, ln_var, self.pdf)
+        return cross_entropy
+
+class PDF(nn.Module):
+
+    def __init__(self, dim, pdf):
+        super(PDF, self).__init__()
+        assert pdf in {'gauss', 'logistic'}
+        self.dim = dim
+        self.pdf = pdf
+        self.mu = nn.Embedding(1, self.dim)
+        self.ln_var = nn.Embedding(1, self.dim)  # ln(s) in logistic
+
+    def forward(self, Y):
+        cross_entropy = compute_negative_ln_prob(Y, self.mu.weight,
+                                                 self.ln_var.weight, self.pdf)
         return cross_entropy

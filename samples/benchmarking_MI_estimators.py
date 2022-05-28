@@ -1,153 +1,255 @@
 import torch
 import torch.nn as nn
 import copy
+import matplotlib.pyplot as plt
+import numpy as np
+import random
+from utils import set_seed
+from tqdm import tqdm
+import time
+import argparse
+import logging
+import seaborn as sns
+import pandas as pd
+import matplotlib.ticker as ticker
+
+logger = logging.getLogger(__name__)
+if torch.cuda.is_available():
+    device = torch.device('cuda')
+else:
+    device = torch.device('cpu')
 
 
-class MultiGaussKernelEE(nn.Module):
-    def __init__(self, device, number_of_samples, hidden_size,
-                 # [K, d] to initialize the kernel :) so K is the number of points :)
-                 average='weighted',  # un
-                 cov_diagonal='var',  # diagonal of the covariance
-                 cov_off_diagonal='var',  # var
-                 ):
+def sample_correlated_gaussian(rho=0.5, dim=20, batch_size=128, to_cuda=False, cubic=False):
+    """Generate samples from a correlated Gaussian distribution."""
+    mean = [0, 0]
+    cov = [[1.0, rho], [rho, 1.0]]
+    x, y = np.random.multivariate_normal(mean, cov, batch_size * dim).T
 
-        self.K, self.d = number_of_samples, hidden_size
-        super(MultiGaussKernelEE, self).__init__()
-        self.device = device
+    x = x.reshape(-1, dim)
+    y = y.reshape(-1, dim)
 
-        # base_samples.requires_grad = False
-        # if kernel_positions in ('fixed', 'free'):
-        #    self.mean = base_samples[None, :, :].to(self.args.device)
-        # else:
-        #    self.mean = base_samples[None, None, :, :].to(self.args.device)  # [1, 1, K, d]
+    if cubic:
+        y = y ** 3
 
-        # self.K = K
-        # self.d = d
-        self.joint = False
-
-        self.logC = torch.tensor([-self.d / 2 * np.log(2 * np.pi)]).to(
-            self.device)
-
-        self.means = nn.Parameter(torch.rand(number_of_samples, hidden_size), requires_grad=True).to(
-            self.device)
-        if cov_diagonal == 'const':
-            diag = torch.ones((1, 1, self.d))
-        elif cov_diagonal == 'var':
-            diag = torch.ones((1, self.K, self.d))
-        else:
-            assert False, f'Invalid cov_diagonal: {cov_diagonal}'
-        self.diag = nn.Parameter(diag.to(self.device))
-
-        if cov_off_diagonal == 'var':
-            tri = torch.zeros((1, self.K, self.d, self.d))
-            self.tri = nn.Parameter(tri.to(self.device))
-        elif cov_off_diagonal == 'zero':
-            self.tri = None
-        else:
-            assert False, f'Invalid cov_off_diagonal: {cov_off_diagonal}'
-
-        self.weigh = torch.ones((1, self.K), requires_grad=False).to(self.device)
-        if average == 'weighted':
-            self.weigh = nn.Parameter(self.weigh, requires_grad=True)
-        else:
-            assert average == 'fixed', f"Invalid average: {average}"
-
-    def logpdf(self, x, y=None):
-        assert len(x.shape) == 2 and x.shape[1] == self.d, 'x has to have shape [N, d]'
-        x = x[:, None, :]
-        w = torch.log_softmax(self.weigh, dim=1)
-        y = x - self.means
-        if self.tri is not None:
-            y = y * self.diag + torch.squeeze(torch.matmul(torch.tril(self.tri, diagonal=-1), y[:, :, :, None]), 3)
-        else:
-            y = y * self.diag
-        y = torch.sum(y ** 2, dim=2)
-
-        y = -y / 2 + torch.sum(torch.log(torch.abs(self.diag)), dim=2) + w
-        if self.joint:
-            y = torch.log(torch.sum(torch.exp(y), dim=-1) / 2)
-        else:
-            y = torch.logsumexp(y, dim=-1)
-        return self.logC + y
-
-    def learning_loss(self, x_samples, y=None):
-        return -self.forward(x_samples)
-
-    def update_parameters(self, kernel_dict):
-        tri = []
-        means = []
-        weigh = []
-        diag = []
-        for key, value in kernel_dict.items():  # detach and clone
-            tri.append(copy.deepcopy(value.tri.detach().clone()))
-            means.append(copy.deepcopy(value.means.detach().clone()))
-            weigh.append(copy.deepcopy(value.weigh.detach().clone()))
-            diag.append(copy.deepcopy(value.diag.detach().clone()))
-
-        self.tri = nn.Parameter(torch.cat(tri, dim=1), requires_grad=True).to(self.device)
-        self.means = nn.Parameter(torch.cat(means, dim=0), requires_grad=True).to(self.device)
-        self.weigh = nn.Parameter(torch.cat(weigh, dim=-1), requires_grad=True).to(self.device)
-        self.diag = nn.Parameter(torch.cat(diag, dim=1), requires_grad=True).to(self.device)
-
-    def pdf(self, x):
-        return torch.exp(self.logpdf(x))
-
-    def forward(self, x, y=None):
-        y = torch.abs(-self.logpdf(x))
-        return torch.mean(y)
+    if to_cuda:
+        x = torch.from_numpy(x).float().cuda()
+        y = torch.from_numpy(y).float().cuda()
+    return x, y
 
 
-class MultiGaussKernelCondEE(nn.Module):
+def rho_to_mi(rho, dim):
+    result = -dim / 2 * np.log(1 - rho ** 2)
+    return result
 
-    def __init__(self, device,
-                 number_of_samples,  # [K, d]
-                 x_size, y_size,
-                 layers=1,
-                 ):
-        super(MultiGaussKernelCondEE, self).__init__()
-        self.K, self.d = number_of_samples, y_size
-        self.device = device
 
-        self.logC = torch.tensor([-self.d / 2 * np.log(2 * np.pi)]).to(self.device)
+def mi_to_rho(mi, dim):
+    result = np.sqrt(1 - np.exp(-2 * mi / dim))
+    return result
 
-        # mean_weight = 10 * (2 * torch.eye(K) - torch.ones((K, K)))
-        # mean_weight = _c(mean_weight[None, :, :, None])  # [1, K, K, 1]
-        # self.mean_weight = nn.Parameter(mean_weight, requires_grad=True)
 
-        self.std = FF(self.d, self.d * 2, self.K, layers)
-        self.weight = FF(self.d, self.d * 2, self.K, layers)
-        # self.mean_weight = FF(d, hidden, K**2, layers)
-        self.mean_weight = FF(self.d, self.d * 2, self.K * x_size, layers)
-        self.x_size = x_size
+def main(args):
+    colors = sns.color_palette()
 
-    def _get_mean(self, y):
-        # mean_weight = self.mean_weight(y).reshape((-1, self.K, self.K, 1))  # [N, K, K, 1]
-        # means = torch.sum(torch.softmax(mean_weight, dim=2) * self.base_X, dim=2)  #[1, K, d]
-        means = self.mean_weight(y).reshape((-1, self.K, self.x_size))  # [N, K, d]
-        return means
+    EMA_SPAN = 200
+    settings = f"""
+    Settings:
+      CUDA:             {torch.cuda.is_available()!s}
+      batchsize:        {args.batchsize!s}
+      reps:             {args.reps!s}
+      iterations:       {args.iterations!s}
+      epochs:           {args.epochs!s}
+      kernel_samples:   {args.kernel_samples!s}
+      d:                {args.dimension!s}
+      pdf:              {args.pdf!s}
+      rho:              {args.rho:.2f}
+      lr:               {args.lr:.2f}
+      """
+    logger.info(settings)
 
-    def logpdf(self, x, y):  # H(X|Y)
-        # for data in (x, y):
-        # assert len(data.shape) == 2 and data.shape[1] == self.d, 'x has to have shape [N, d]'
-        # assert x.shape == y.shape, "x and y need to have the same shape"
+    sample_dim = args.sample_dim
+    batch_size = args.batch_size
+    hidden_size = args.hidden_size
+    learning_rate = args.learning_rate
+    training_steps = args.training_steps
+    mi_list = [2 * i for i in range(args.max_mi)]
+    model_list = ["CLUBSample", "KNIFE"]  # CLUBSample
+    total_steps = training_steps * len(mi_list)
 
-        x = x[:, None, :]  # [N, 1, d]
+    logger.info('Starting Training Models')
+    for seed in range(args.reps):
+        logger.info(f'Training with seed {seed} over !')
+        set_seed(seed)
 
-        w = torch.log_softmax(self.weight(y), dim=-1)  # [N, K]
-        std = self.std(y).exp()  # [N, K]
-        # std = self.std(y)  # [N, K]
-        mu = self._get_mean(y)  # [1, K, d]
+        #######################################
+        ####### TRAINING THE ESTIMATORS #######
+        #######################################
 
-        y = x - mu  # [N, K, d]
-        y = std ** 2 * torch.sum(y ** 2, dim=2)  # [N, K]
+        mi_results = dict()
+        for model_name in tqdm(model_list, 'Models'):
+            model = eval(model_name)(sample_dim, sample_dim, hidden_size).to(device) # TODO : check that
+            optimizer = torch.optim.Adam(model.parameters(), learning_rate)
 
-        y = -y / 2 + self.d * torch.log(torch.abs(std)) + w
-        y = torch.logsumexp(y, dim=-1)
-        return self.logC + y
+            mi_est_values = []
 
-    def pdf(self, x, y):
-        return torch.exp(self.logpdf(x, y))
+            start_time = time.time()
+            for mi_value in tqdm(mi_list, 'MI'):
+                rho = mi_to_rho(mi_value, sample_dim)
 
-    def forward(self, x, y):
-        z = -self.logpdf(x, y)
-        return torch.mean(z)
+                for _ in tqdm(range(training_steps), 'Training Loop', position=0, leave=True):
+                    batch_x, batch_y = sample_correlated_gaussian(rho, dim=sample_dim, batch_size=batch_size,
+                                                                  to_cuda=torch.cuda.is_available(), cubic=args.cubic)
+                    batch_x = torch.tensor(batch_x).float().to(device)
+                    batch_y = torch.tensor(batch_y).float().to(device)
+                    model.eval()
+                    mi_est_values.append(model(batch_x, batch_y).item())
+
+                    model.train()
+
+                    model_loss = model.learning_loss(batch_x, batch_y)
+
+                    optimizer.zero_grad()
+                    model_loss.backward()
+                    optimizer.step()
+
+                    del batch_x, batch_y
+                    if torch.cuda.is_available():
+                        torch.cuda.empty_cache()
+
+                logger.info("finish training for %s with true MI value = %f" % (model.__class__.__name__, mi_value))
+            end_time = time.time()
+            time_cost = end_time - start_time
+            logger.info("model %s average time cost is %f s" % (model_name, time_cost / total_steps))
+            mi_results[model_name] = mi_est_values
+
+        ######################################
+        ####### DYNAMIC ESTIMATE PLOTS #######
+        ######################################
+        logger.info('Plotting DYNAMIC ESTIMATE PLOTS')
+        ncols = len(model_list)
+        nrows = 1
+        fig, axs = plt.subplots(nrows, ncols, figsize=(3.1 * ncols, 3.4 * nrows))
+        axs = np.ravel(axs)
+
+        yaxis_mi = np.repeat(mi_list, training_steps)
+
+        for i, model_name in enumerate(model_list):
+            plt.sca(axs[i])
+            p1 = plt.plot(mi_results[model_name], alpha=0.4, color=colors[0])[0]  # color = 5 or 0
+            plt.locator_params(axis='y', nbins=5)
+            plt.locator_params(axis='x', nbins=4)
+            mis_smooth = pd.Series(mi_results[model_name]).ewm(span=EMA_SPAN).mean()
+
+            if i == 0:
+                plt.plot(mis_smooth, c=p1.get_color(), label='$\\hat{I}$')
+                plt.plot(yaxis_mi, color='k', label='True')
+                plt.xlabel('Steps', fontsize=25)
+                plt.ylabel('MI', fontsize=25)
+                plt.legend(loc='upper left', prop={'size': 15})
+            else:
+                plt.plot(mis_smooth, c=p1.get_color())
+                plt.yticks([])
+                plt.plot(yaxis_mi, color='k')
+                plt.xlabel('Steps', fontsize=25)
+
+            plt.ylim(0, 15.5)
+            plt.xlim(0, total_steps)
+            plt.title(model_name, fontsize=35)
+
+            ax = plt.gca()
+            ax.xaxis.set_major_formatter(ticker.EngFormatter())
+            plt.xticks(horizontalalignment="right")
+
+        plt.gcf().tight_layout()
+        plt.savefig(f'{args.saving_path}_mi_estimation.pdf', bbox_inches=None)
+
+        logger.info('Plotting MSE, VAR and BIAS PLOTS')
+
+        #######################################
+        ####### MSE, VAR and BIAS PLOTS #######
+        #######################################
+
+        bias_dict = dict()
+        var_dict = dict()
+        mse_dict = dict()
+        for i, model_name in tqdm(enumerate(model_list)):
+            bias_list = []
+            var_list = []
+            mse_list = []
+            for j in range(len(mi_list)):
+                mi_est_values = mi_results[model_name][training_steps * (j + 1) - 500:training_steps * (j + 1)]
+                est_mean = np.mean(mi_est_values)
+                bias_list.append(np.abs(mi_list[j] - est_mean))
+                var_list.append(np.var(mi_est_values))
+                mse_list.append(bias_list[j] ** 2 + var_list[j])
+            bias_dict[model_name] = bias_list
+            var_dict[model_name] = var_list
+            mse_dict[model_name] = mse_list
+
+        plt.style.use('default')
+
+        colors = list(plt.rcParams['axes.prop_cycle'])
+        col_idx = [2, 4, 5, 1, 3, 0, 6, 7]
+
+        ncols = 1
+        nrows = 3
+        fig, axs = plt.subplots(nrows, ncols, figsize=(4.5 * ncols, 3. * nrows))
+        axs = np.ravel(axs)
+
+        for i, model_name in enumerate(model_list):
+            plt.sca(axs[0])
+            plt.plot(mi_list, bias_dict[model_name], label=model_name, marker='d', color=colors[col_idx[i]]["color"])
+
+            plt.sca(axs[1])
+            plt.plot(mi_list, var_dict[model_name], label=model_name, marker='d', color=colors[col_idx[i]]["color"])
+
+            plt.sca(axs[2])
+            plt.plot(mi_list, mse_dict[model_name], label=model_name, marker='d', color=colors[col_idx[i]]["color"])
+
+        ylabels = ['Bias', 'Variance', 'MSE']
+        for i in range(3):
+            plt.sca(axs[i])
+            plt.ylabel(ylabels[i], fontsize=15)
+            if i == 1:
+                plt.yscale('log')
+            if i == 2:
+                plt.legend(loc='upper left', prop={'size': 12})
+                plt.xlabel('MI Values', fontsize=15)
+
+        plt.gcf().tight_layout()
+        plt.savefig(f'{args.saving_path}_errors.pdf', bbox_inches='tight')
+
+        logger.info('Everything is done!')
+
+
+def get_args(argv=None):
+    parser = argparse.ArgumentParser(description='Train diff entropy')
+    parser.add_argument('--reps', type=int, default=1, help='Repeat how ofter')
+    parser.add_argument('--max_mi', type=int, default=5, help='Maximum mutual information to estimate')
+    parser.add_argument('--sample_dim', type=int, default=20, help='Dimension of the data')
+    parser.add_argument('--hidden_size', type=int, default=15, help='Hidden size of the estimators')
+    parser.add_argument('--batch_size', type=int, required=False, default=128,
+                        help='Size of batches')
+    parser.add_argument('--training_steps', type=int, required=False, default=5000,
+                        help='Number of iterations per epoch')
+    parser.add_argument('--kernel_samples', type=int, required=False, default=500,
+                        help='Number samples used for kernel construction')
+    parser.add_argument('--learning_rate', type=float, default=0.001,
+                        help='learning rate')
+    parser.add_argument('--cubic', action='store_true', default=False,
+                        help='Cubed transform')
+    parser.add_argument('--use_tanh', action='store_true', default=False,
+                        help='Use Tanh for the variance')
+    parser.add_argument('--dimension', type=int, required=False, default=5,
+                        help='Data dimension')
+
+    args = parser.parse_args(argv)
+
+    return args
+
+
+if __name__ == '__main__':
+    args = get_args()
+    logging.getLogger('matplotlib').setLevel(logging.WARN)
+    logging.getLogger().addHandler(logging.StreamHandler())
+    main(args)
