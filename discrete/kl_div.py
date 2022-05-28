@@ -1,5 +1,5 @@
 from discrete_estimator import DiscreteEstimator
-
+import torch
 
 class KullbackLeiblerDivergence(DiscreteEstimator):
     def __init__(self, name):

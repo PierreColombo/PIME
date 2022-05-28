@@ -2,7 +2,7 @@
 
 
 from discrete_estimator import DiscreteEstimator
-
+import torch
 
 
 

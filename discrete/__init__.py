@@ -1,5 +1,5 @@
 import sys
-sys.path.append('.')
+sys.path.append('discrete/')
 from ab_div import ABDivergence
 from alpha_div import AlphaDivergence
 from renyi_div import RenyiDivergence
@@ -17,7 +17,7 @@ DISCRETE_ESTIMATORS = {
     'beta_div': BetaDivergence,
     'kl_div': KullbackLeiblerDivergence,
     'entropy': DiscreteEntropyEstimator,
-    'lp_div': LP,
+    'lp': LP,
     'fisher_rao': FisherRao,
     'js_sym': JensenSymetrizationEstimator,
     'jf_sym': JeffreySymetrizationEstimator,

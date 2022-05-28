@@ -1,6 +1,6 @@
 
 from discrete_estimator import DiscreteEstimator
-
+import torch
 
 class RenyiDivergence(DiscreteEstimator):
     def __init__(self, name, alpha):
