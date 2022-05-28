@@ -1,5 +1,7 @@
-from club import CLUB, CLUBSample
+import sys
+sys.path.append('continuous/')
 from cond_knife import ConditionalKNIFE
+from club import CLUB, CLUBSample
 from gaussian_fisher_rao import FisherRao
 from gaussian_frechet import Frechet
 from gaussian_mi import MIGaussian

@@ -1,19 +1,19 @@
 import unittest
-
 from tqdm import tqdm
+from continuous import CONTINUOUS_ESTIMATORS
+import torch
 
-from discret_discret_similarity import *
-from continuous_continous_similarity import *
 
+# 'gaussian_mi': MIGaussian,
 
 class TestContinuousMethods(unittest.TestCase):
 
     def test_closed_forms(self):
-        for measure in tqdm([MGHClosedJS, MGHClosedRAO, MGHClosedFRECHET], 'Closed Form'):
+        for measure_name in tqdm(['gaussian_frechet', 'gaussian_fisher_rao', 'gaussian_js'], 'Closed Form'):
+            measure = CONTINUOUS_ESTIMATORS[measure_name]
             batch_size = 100
             hidden_size = 50
             random_vectors = torch.rand(batch_size, hidden_size)
             closed_measure = measure('test_closed_form')
-            closed_measure.fit(random_vectors, random_vectors)
-            distance = closed_measure.predict(random_vectors, random_vectors)
+            distance = closed_measure.forward(random_vectors, random_vectors)
             assert distance == 0
