@@ -1,3 +1,5 @@
+import sys
+sys.path.append('.')
 from ab_div import ABDivergence
 from alpha_div import AlphaDivergence
 from renyi_div import RenyiDivergence

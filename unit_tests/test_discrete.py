@@ -1,8 +1,7 @@
 import unittest
-
 from tqdm import tqdm
-
-from discret_discret_similarity import *
+import torch
+from discrete import *
 
 
 class TestDiscreteMethods(unittest.TestCase):
