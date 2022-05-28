@@ -2,6 +2,35 @@ import torch.nn as nn
 import torch
 
 
+
+
+class MIKnife(nn.Module):
+    def __init__(self, x_dim, y_dim, hidden_size, pdf='gauss'):
+        """
+        paper from
+        :param dim:
+        :param hidden:
+        :param pdf:
+        """
+        super(MIDOE, self).__init__()
+        self.qY = PDF(y_dim, pdf)
+        self.qY_X = ConditionalPDF(x_dim, y_dim, pdf)
+
+    def learning_loss(self, X, Y):
+        hY = self.qY(Y)
+        hY_X = self.qY_X(Y, X)
+
+        loss = hY + hY_X
+        return loss
+
+    def forward(self, X, Y):
+        hY = self.qY(Y)
+        hY_X = self.qY_X(Y, X)
+
+        return hY - hY_X
+
+
+
 class MIKernelEstimator(nn.Module):
     def __init__(self, device, number_of_samples, x_size, y_size,
                  # [K, d] to initialize the kernel :) so K is the number of points :)

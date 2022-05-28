@@ -8,7 +8,7 @@ from infonce import InfoNCE
 from knife import KNIFE
 from l1out import L1OutUB
 from mi_doe import MIDOE
-from mi_knife import MIKernelEstimator
+from mi_knife import MIKnife
 from mine import MINE
 from nwj import NWJ
 from tuba import TUBA
@@ -26,7 +26,7 @@ CONTINUOUS_ESTIMATORS = {
     'knife': KNIFE,
     'l1out': L1OutUB,
     'mi_doe': MIDOE,
-    'mi_knife': MIKernelEstimator,
+    'mi_knife': MIKnife,
     'mine': MINE,
     'nwj': NWJ,
     'tuba': TUBA,

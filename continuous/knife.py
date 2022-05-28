@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
-
-
+import numpy as np
 
 
 class KNIFE(nn.Module):
@@ -68,4 +67,3 @@ class KNIFE(nn.Module):
     def forward(self, x):
         y = -self.logpdf(x)
         return torch.mean(y)
-

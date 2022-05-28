@@ -113,49 +113,6 @@ def compute_negative_ln_prob(Y, mu, ln_var, pdf):
     return negative_ln_prob
 
 
-class FF_DOE(nn.Module):
-
-    def __init__(self, dim_input, dim_output, dropout_rate=0):
-        super(FF_DOE, self).__init__()
-        self.residual_connection = False
-        self.num_layers = 1
-        self.layer_norm = True
-        self.activation = 'tanh'
-        self.stack = nn.ModuleList()
-        for l in range(self.num_layers):
-            layer = []
-
-            if self.layer_norm:
-                layer.append(nn.LayerNorm(dim_input))
-
-            layer.append(nn.Linear(dim_input, dim_output))
-            layer.append({'tanh': nn.Tanh(), 'relu': nn.ReLU()}[self.activation])
-            layer.append(nn.Dropout(dropout_rate))
-
-            self.stack.append(nn.Sequential(*layer))
-
-        self.out = nn.Linear(dim_output, dim_output)
-
-    def forward(self, x):
-        for layer in self.stack:
-            x = layer(x)
-        return self.out(x)
-
-
-class ConditionalPDF(nn.Module):
-
-    def __init__(self, dim, hidden, pdf):
-        super(ConditionalPDF, self).__init__()
-        assert pdf in {'gauss', 'logistic'}
-        self.dim = dim
-        self.pdf = pdf
-        self.X2Y = FF_DOE(dim, 2 * dim, 0.2)
-
-    def forward(self, Y, X):
-        mu, ln_var = torch.split(self.X2Y(X), self.dim, dim=1)
-        cross_entropy = compute_negative_ln_prob(Y, mu, ln_var, self.pdf)
-        return cross_entropy
-
 class PDF(nn.Module):
 
     def __init__(self, dim, pdf):

@@ -1,5 +1,5 @@
 from mixed_estimator import MixedEstimator
-from discrete_measures import *
+from discrete import *
 
 from typing import Any
 from copy import deepcopy
