@@ -12,3 +12,8 @@ class ContinuousEstimator(ABC):
     @abstractmethod
     def predict(self, X, Y):
         pass
+
+
+CONTINUOUS_ESTIMATORS = {
+
+}
