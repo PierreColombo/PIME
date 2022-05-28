@@ -1,3 +1,5 @@
+import torch
+import torch.nn as nn
 
 
 class VarUB(nn.Module):  # variational upper bound
@@ -27,4 +29,3 @@ class VarUB(nn.Module):  # variational upper bound
 
     def learning_loss(self, x_samples, y_samples):
         return - self.loglikeli(x_samples, y_samples)
-

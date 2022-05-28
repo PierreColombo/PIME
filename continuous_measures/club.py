@@ -1,4 +1,5 @@
-
+import torch.nn as nn
+import torch
 
 
 class CLUB(nn.Module):  # CLUB: Mutual Information Contrastive Learning Upper Bound

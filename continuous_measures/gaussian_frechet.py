@@ -1,3 +1,7 @@
+from continuous_estimator import ContinuousEstimator
+from helper import compute_mean, compute_cov
+import torch
+
 class Frechet(ContinuousEstimator):
     def __init__(self, name):
         self.name = name

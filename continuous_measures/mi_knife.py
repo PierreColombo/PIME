@@ -1,3 +1,7 @@
+import torch.nn as nn
+import torch
+
+
 class MIKernelEstimator(nn.Module):
     def __init__(self, device, number_of_samples, x_size, y_size,
                  # [K, d] to initialize the kernel :) so K is the number of points :)

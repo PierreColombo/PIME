@@ -1,3 +1,6 @@
+import torch
+import torch.nn as nn
+
 
 class InfoNCE(nn.Module):
     def __init__(self, x_dim, y_dim, hidden_size):

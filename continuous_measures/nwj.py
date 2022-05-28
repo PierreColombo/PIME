@@ -1,3 +1,5 @@
+import torch
+import torch.nn as nn
 
 
 class NWJ(nn.Module):

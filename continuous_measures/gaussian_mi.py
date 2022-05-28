@@ -1,8 +1,9 @@
+from continuous_estimator import ContinuousEstimator
+from helper import compute_mean, compute_cov
+import torch
 
 
-
-
-class MGHClosedMI(ContinuousEstimator):
+class MIGaussian(ContinuousEstimator):
     def __init__(self, name):
         raise NotImplementedError
         self.name = name

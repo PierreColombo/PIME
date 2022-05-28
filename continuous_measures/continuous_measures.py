@@ -152,18 +152,3 @@ class DoE(nn.Module):
         hY_X = self.qY_X(z_d, z_c)
         loss = hY + hY_X
         return loss
-
-
-class ConditionalPDF(nn.Module):
-
-    def __init__(self, args, dim, hidden, pdf):
-        super(ConditionalPDF, self).__init__()
-        assert pdf in {'gauss', 'logistic'}
-        self.dim = dim
-        self.pdf = pdf
-        self.X2Y = FF(args, dim, hidden, 2 * dim)
-
-    def forward(self, Y, X):
-        mu, ln_var = torch.split(self.X2Y(X), self.dim, dim=1)
-        cross_entropy = compute_negative_ln_prob(Y, mu, ln_var, self.pdf)
-        return cross_entropy
