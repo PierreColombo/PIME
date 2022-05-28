@@ -20,7 +20,7 @@ from continuous.continuous_measures import PDF
 
 import json
 from types import SimpleNamespace
-from tools import MultiSummaryWriter
+from examples.differential_entropy_estimation.tools import MultiSummaryWriter
 
 logger = logging.getLogger(__name__)
 
