@@ -17,5 +17,5 @@ class AlphaDivergence(DiscreteEstimator):
         """
         alpha = self.alpha
 
-        return 1 / (alpha * (alpha - 1)) - torch.sum(X ** alpha * Y ** (1 - alpha), dim=-1) / (
-                alpha * (alpha - 1))
+        return 1 / (alpha * (1 - alpha)) - torch.sum(X ** alpha * Y ** (1 - alpha), dim=-1) / (
+                alpha * (1 - alpha))
