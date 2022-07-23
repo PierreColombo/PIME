@@ -1,7 +1,7 @@
 import unittest
 from tqdm import tqdm
 import torch
-from discrete import DISCRETE_ESTIMATORS
+from divergence import DISCRETE_ESTIMATORS
 
 
 class TestDiscreteMethods(unittest.TestCase):

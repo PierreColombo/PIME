@@ -3,7 +3,7 @@
 
 import torch
 import numpy as np
-from continuous.continuous_measures import KNIFE
+from mutual_information import KNIFE
 from synthetic_datasets import DataGeneratorMulti, get_random_data_generator
 import matplotlib.pyplot as plt
 from tqdm import tqdm
@@ -16,7 +16,7 @@ from numpy.linalg import slogdet
 import logging
 import shutil
 from os.path import join
-from continuous.continuous_measures import PDF
+from mutual_information import PDF
 
 import json
 from types import SimpleNamespace

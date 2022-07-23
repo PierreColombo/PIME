@@ -1,7 +1,7 @@
 
 
 
-from discrete_estimator import DiscreteEstimator
+from divergence.discrete_estimator import DiscreteEstimator
 import torch
 
 

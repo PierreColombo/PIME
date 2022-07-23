@@ -1,5 +1,4 @@
-from mixed_estimator import MixedEstimator
-from discrete import *
+from utils.mixed_estimator import MixedEstimator
 
 from typing import Any
 from copy import deepcopy

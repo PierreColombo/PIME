@@ -1,6 +1,6 @@
 import torch.nn as nn
 
-from helper import PDF, compute_negative_ln_prob
+from utils.helper import PDF, compute_negative_ln_prob
 import torch
 
 

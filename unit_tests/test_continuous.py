@@ -1,6 +1,6 @@
 import unittest
 from tqdm import tqdm
-from continuous import CONTINUOUS_ESTIMATORS
+from mutual_information import CONTINUOUS_ESTIMATORS
 import torch
 
 

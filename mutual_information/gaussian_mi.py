@@ -1,6 +1,5 @@
 from continuous_estimator import ContinuousEstimator
-from helper import compute_mean, compute_cov
-import torch
+from utils.helper import compute_cov
 
 
 class MIGaussian(ContinuousEstimator):
