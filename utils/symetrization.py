@@ -1,4 +1,4 @@
-from discrete_estimator import DiscreteEstimator
+from divergence.discrete_estimator import DiscreteEstimator
 
 
 class JeffreySymetrizationEstimator(DiscreteEstimator):
@@ -8,8 +8,8 @@ class JeffreySymetrizationEstimator(DiscreteEstimator):
 
     def predict(self, X, Y=None):
         """
-        :param X: discreate input reference distribution over the vocabulary
-        :param Y: discreate hypothesis reference distribution over the vocabulary
+        :param X: discrete input reference distribution over the vocabulary
+        :param Y: discrete hypothesis reference distribution over the vocabulary
         :param alpha: alpha parameter of the divergence
         :return: alpha divergence between the reference and hypothesis distribution
         """
@@ -23,8 +23,8 @@ class JensenSymetrizationEstimator(DiscreteEstimator):
 
     def predict(self, X, Y=None):
         """
-        :param X: discreate input reference distribution over the vocabulary
-        :param Y: discreate hypothesis reference distribution over the vocabulary
+        :param X: discrete input reference distribution over the vocabulary
+        :param Y: discrete hypothesis reference distribution over the vocabulary
         :param alpha: alpha parameter of the divergence
         :return: alpha divergence between the reference and hypothesis distribution
         """
