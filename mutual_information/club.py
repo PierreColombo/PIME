@@ -1,23 +1,28 @@
 import torch.nn as nn
 import torch
+from torch import Tensor
 
 
 class CLUB(nn.Module):  # CLUB: Mutual Information Contrastive Learning Upper Bound
-    '''
-        This class provides the CLUB estimation to I(X,Y)
-        Method:
-            forward() :      provides the estimation with input samples
-            loglikeli() :   provides the log-likelihood of the approximation q(Y|X) with input samples
-        Arguments:
-            x_dim, y_dim :         the dimensions of samples from X, Y respectively
-            hidden_size :          the dimension of the hidden layer of the approximation network q(Y|X)
-            x_samples, y_samples : samples from X and Y, having shape [sample_size, x_dim/y_dim]
-    '''
+    """
+      This is a class that implements the estimator [13] to I(X,Y).
+      :param x_dim: dimensions of samples from X
+      :type x_dim:  int
+      :param y_dim:dimensions of samples from Y
+      :type y_dim: int
+     :param hidden_size: the dimension of the hidden layer of the approximation network q(Y|X)
+      :type hidden_size: int
 
-    def __init__(self, x_dim, y_dim, hidden_size):
+      References
+      ----------
+
+      .. [13] Cheng, P., Hao, W., Dai, S., Liu, J., Gan, Z., & Carin, L. (2020, November). Club: A contrastive
+      log-ratio upper bound of mutual information. In International conference on machine learning (pp. 1779-1788). PMLR.
+    """
+
+    def __init__(self, x_dim: int, y_dim: int, hidden_size: int):
         super(CLUB, self).__init__()
         # p_mu outputs mean of q(Y|X)
-        # print("create CLUB with dim {}, {}, hiddensize {}".format(x_dim, y_dim, hidden_size))
         self.p_mu = nn.Sequential(nn.Linear(x_dim, hidden_size // 2),
                                   nn.ReLU(),
                                   nn.Linear(hidden_size // 2, y_dim))
@@ -27,12 +32,21 @@ class CLUB(nn.Module):  # CLUB: Mutual Information Contrastive Learning Upper Bo
                                       nn.Linear(hidden_size // 2, y_dim),
                                       nn.Tanh())
 
-    def get_mu_logvar(self, x_samples):
+    def get_mu_logvar(self, x_samples: Tensor) -> tuple[Tensor, Tensor]:
         mu = self.p_mu(x_samples)
         logvar = self.p_logvar(x_samples)
         return mu, logvar
 
-    def forward(self, x_samples, y_samples):
+    def forward(self, x_samples: Tensor, y_samples: Tensor) -> Tensor:
+        """
+
+        Args:
+            x_samples:
+            y_samples:
+
+        Returns:
+
+        """
         mu, logvar = self.get_mu_logvar(x_samples)
 
         # log of conditional probability of positive sample pairs
@@ -46,16 +60,32 @@ class CLUB(nn.Module):  # CLUB: Mutual Information Contrastive Learning Upper Bo
 
         return (positive.sum(dim=-1) - negative.sum(dim=-1)).mean()
 
-    def loglikeli(self, x_samples, y_samples):  # unnormalized loglikelihood
+    def loglikeli(self, x_samples: Tensor, y_samples: Tensor):  # unnormalized loglikelihood
         mu, logvar = self.get_mu_logvar(x_samples)
         return (-(mu - y_samples) ** 2 / logvar.exp() - logvar).sum(dim=1).mean(dim=0)
 
-    def learning_loss(self, x_samples, y_samples):
+    def learning_loss(self, x_samples: Tensor, y_samples: Tensor):
         return - self.loglikeli(x_samples, y_samples)
 
 
 class CLUBSample(nn.Module):  # Sampled version of the CLUB estimator
-    def __init__(self, x_dim, y_dim, hidden_size):
+    """
+      This is a class that implements the estimator [13] to I(X,Y).
+      :param x_dim: dimensions of samples from X
+      :type x_dim:  int
+      :param y_dim:dimensions of samples from Y
+      :type y_dim: int
+     :param hidden_size: the dimension of the hidden layer of the approximation network q(Y|X)
+      :type hidden_size: int
+
+      References
+      ----------
+
+      .. [13] Cheng, P., Hao, W., Dai, S., Liu, J., Gan, Z., & Carin, L. (2020, November). Club: A contrastive
+      log-ratio upper bound of mutual information. In International conference on machine learning (pp. 1779-1788). PMLR.
+    """
+
+    def __init__(self, x_dim: int, y_dim: int, hidden_size: int):
         super(CLUBSample, self).__init__()
         self.p_mu = nn.Sequential(nn.Linear(x_dim, hidden_size // 2),
                                   nn.ReLU(),
@@ -66,20 +96,19 @@ class CLUBSample(nn.Module):  # Sampled version of the CLUB estimator
                                       nn.Linear(hidden_size // 2, y_dim),
                                       nn.Tanh())
 
-    def get_mu_logvar(self, x_samples):
+    def get_mu_logvar(self, x_samples: Tensor)-> tuple[Tensor, Tensor]:
         mu = self.p_mu(x_samples)
         logvar = self.p_logvar(x_samples)
         return mu, logvar
 
-    def loglikeli(self, x_samples, y_samples):
+    def loglikeli(self, x_samples: Tensor, y_samples: Tensor) -> Tensor:
         mu, logvar = self.get_mu_logvar(x_samples)
         return (-(mu - y_samples) ** 2 / logvar.exp() - logvar).sum(dim=1).mean(dim=0)
 
-    def forward(self, x_samples, y_samples):
+    def forward(self, x_samples: Tensor, y_samples: Tensor) -> Tensor:
         mu, logvar = self.get_mu_logvar(x_samples)
 
         sample_size = x_samples.shape[0]
-        # random_index = torch.randint(sample_size, (sample_size,)).long()
         random_index = torch.randperm(sample_size).long()
 
         positive = - (mu - y_samples) ** 2 / logvar.exp()
@@ -87,5 +116,5 @@ class CLUBSample(nn.Module):  # Sampled version of the CLUB estimator
         upper_bound = (torch.abs(positive.sum(dim=-1) - negative.sum(dim=-1))).mean()
         return upper_bound / 2.
 
-    def learning_loss(self, x_samples, y_samples):
+    def learning_loss(self, x_samples: Tensor, y_samples: Tensor) -> Tensor:
         return - self.loglikeli(x_samples, y_samples)

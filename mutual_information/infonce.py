@@ -1,16 +1,33 @@
 import torch
 import torch.nn as nn
+from torch import Tensor
 
 
 class InfoNCE(nn.Module):
-    def __init__(self, x_dim, y_dim, hidden_size):
+    """
+      This is a class that implements the estimator [13] to I(X,Y).
+      :param x_dim: dimensions of samples from X
+      :type x_dim:  int
+      :param y_dim:dimensions of samples from Y
+      :type y_dim: int
+     :param hidden_size: the dimension of the hidden layer of the approximation network q(Y|X)
+      :type hidden_size: int
+
+      References
+      ----------
+
+      .. [13] Cheng, P., Hao, W., Dai, S., Liu, J., Gan, Z., & Carin, L. (2020, November). Club: A contrastive
+      log-ratio upper bound of mutual information. In International conference on machine learning (pp. 1779-1788). PMLR.
+    """
+
+    def __init__(self, x_dim: int, y_dim: int, hidden_size: int):
         super(InfoNCE, self).__init__()
         self.F_func = nn.Sequential(nn.Linear(x_dim + y_dim, hidden_size),
                                     nn.ReLU(),
                                     nn.Linear(hidden_size, 1),
                                     nn.Softplus())
 
-    def forward(self, x_samples, y_samples):  # samples have shape [sample_size, dim]
+    def forward(self, x_samples: Tensor, y_samples: Tensor) -> Tensor:
         # shuffle and concatenate
         sample_size = y_samples.shape[0]
 
@@ -23,6 +40,5 @@ class InfoNCE(nn.Module):
         lower_bound = T0.mean() - (T1.logsumexp(dim=1).mean() - np.log(sample_size))
         return lower_bound
 
-    def learning_loss(self, x_samples, y_samples):
+    def learning_loss(self, x_samples: Tensor, y_samples: Tensor) -> Tensor:
         return -self.forward(x_samples, y_samples)
-

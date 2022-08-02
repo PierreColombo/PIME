@@ -1,7 +1,6 @@
 import torch.nn as nn
-import torch
+from torch import Tensor
 from utils import *
-
 
 
 def log_sum_exp(value, dim=None, keepdim=False):
@@ -40,7 +39,6 @@ def compute_mean(X):
     :return: multivariate mean
     """
     return torch.mean(X, dim=0)
-
 
 
 class FF(nn.Module):

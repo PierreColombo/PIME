@@ -2,16 +2,24 @@ import torch.nn as nn
 import torch
 
 
-
-
 class MIKnife(nn.Module):
-    def __init__(self, x_dim, y_dim, hidden_size, pdf='gauss'):
-        """
-        paper from
-        :param dim:
-        :param hidden:
-        :param pdf:
-        """
+    """
+      This is a class that implements the estimator [13] to I(X,Y).
+      :param x_dim: dimensions of samples from X
+      :type x_dim:  int
+      :param y_dim:dimensions of samples from Y
+      :type y_dim: int
+     :param hidden_size: the dimension of the hidden layer of the approximation network q(Y|X)
+      :type hidden_size: int
+
+      References
+      ----------
+
+      .. [13] Cheng, P., Hao, W., Dai, S., Liu, J., Gan, Z., & Carin, L. (2020, November). Club: A contrastive
+      log-ratio upper bound of mutual information. In International conference on machine learning (pp. 1779-1788). PMLR.
+    """
+
+    def __init__(self, x_dim: int, y_dim: int, hidden_size: int, pdf: str = 'gauss'):
         super(MIDOE, self).__init__()
         self.qY = PDF(y_dim, pdf)
         self.qY_X = ConditionalPDF(x_dim, y_dim, pdf)
@@ -28,7 +36,6 @@ class MIKnife(nn.Module):
         hY_X = self.qY_X(Y, X)
 
         return hY - hY_X
-
 
 
 class MIKernelEstimator(nn.Module):

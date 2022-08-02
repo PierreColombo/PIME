@@ -26,9 +26,9 @@ class FisherRao(DiscreteEstimator):
         """
         Predict divergence scores for the distributions.
 
-        :param X: discreate input reference distribution over the vocabulary
+        :param X: discreate input reference distribution over the discret support
         :type X: tensor of size (B*S) where B is the size of the batch and S the size of the support.
-        :param Y: discreate hypothesis reference distribution over the vocabulary
+        :param Y: discreate hypothesis reference distribution over the discret support
         :type Y: tensor of size (B*S) where B is the size of the batch and S the size of the support.
         :return:  Fisher Rao distance between X and Y
         """
