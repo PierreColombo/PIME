@@ -1,4 +1,4 @@
-from continuous_estimator import ContinuousEstimator
+from utils.continuous_estimator import ContinuousEstimator
 from utils.helper import compute_mean, compute_cov
 import torch
 
