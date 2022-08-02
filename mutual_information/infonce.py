@@ -1,11 +1,12 @@
 import torch
 import torch.nn as nn
 from torch import Tensor
-
+import numpy as np
 
 class InfoNCE(nn.Module):
     """
-      This is a class that implements the estimator [13] to I(X,Y).
+      This is a class that implements the estimator [14] to I(X,Y). InfoNCE is linked to pretraining of Neural Networks
+      see [22,23,24].
       :param x_dim: dimensions of samples from X
       :type x_dim:  int
       :param y_dim:dimensions of samples from Y
@@ -16,8 +17,15 @@ class InfoNCE(nn.Module):
       References
       ----------
 
-      .. [13] Cheng, P., Hao, W., Dai, S., Liu, J., Gan, Z., & Carin, L. (2020, November). Club: A contrastive
-      log-ratio upper bound of mutual information. In International conference on machine learning (pp. 1779-1788). PMLR.
+      .. [14] Oord, A. V. D., Li, Y., & Vinyals, O. (2018). Representation learning with contrastive predictive coding.
+       arXiv preprint arXiv:1807.03748
+      .. [22] Colombo, P., Chapuis, E., Labeau, M., & Clavel, C. (2021, November). Code-switched inspired losses for
+       spoken dialog representations. In Proceedings of the 2021 Conference on Empirical Methods in Natural
+        Language Processing (pp. 8320-8337).
+      .. [23]  Chapuis, E., Colombo, P., Manica, M., Labeau, M., & Clavel, C. (2020). Hierarchical pre-training for
+      sequence labelling in spoken dialog. Findings of EMNLP 2020.
+      .. [24] Kong, L., d'Autume, C. D. M., Ling, W., Yu, L., Dai, Z., & Yogatama, D. (2019). A mutual information
+       maximization perspective of language representation learning. ICLR 2020.
     """
 
     def __init__(self, x_dim: int, y_dim: int, hidden_size: int):

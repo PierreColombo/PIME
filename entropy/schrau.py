@@ -3,7 +3,7 @@ import torch.nn as nn
 import numpy as np
 
 
-class KNIFE(nn.Module):
+class Schrau(nn.Module):
     """
       This is a class that implements the estimator [20] to H(X).
       :param x_dim: dimensions of samples from X

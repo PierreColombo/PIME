@@ -16,8 +16,8 @@ class VarUB(nn.Module):
       References
       ----------
 
-      .. [13] Cheng, P., Hao, W., Dai, S., Liu, J., Gan, Z., & Carin, L. (2020, November). Club: A contrastive
-      log-ratio upper bound of mutual information. In International conference on machine learning (pp. 1779-1788). PMLR.
+      .. [18] Alemi, A. A., Fischer, I., Dillon, J. V., and Murphy, K. Deep variational information bottleneck. arXiv,
+      abs/1612.00410, 2016.
     """
 
     def __init__(self, x_dim: int, y_dim: int, hidden_size: int):

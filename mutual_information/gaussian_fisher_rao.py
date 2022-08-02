@@ -3,6 +3,21 @@ from utils.helper import compute_mean, compute_cov
 import torch
 
 class FisherRao(ContinuousEstimator):
+    """
+      This is a class that compute the Fisher Rao Distance. In the special case where X and Y follows a gaussian
+      multivariate distribution. This has been used in [19] to build fair classifiers and learn disentangled
+      representations.
+      :param name: name of the estimator
+      :type x_dim:  str
+
+      References
+      ----------
+
+      .. [19] Pierre Colombo, Guillaume Staerman, Nathan Noiry, and Pablo Piantanida. 2022. Learning Disentangled
+      Textual Representations via Statistical Measures of Similarity. In Proceedings of the 60th Annual Meeting of
+      the Association for Computational Linguistics (Volume 1: Long Papers), pages 2614–2630, Dublin, Ireland.
+      Association for Computational Linguistics.
+    """
     def __init__(self, name):
         self.name = name
 

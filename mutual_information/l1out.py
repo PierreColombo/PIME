@@ -1,11 +1,13 @@
 import torch
 import torch.nn as nn
 from torch import Tensor
+import numpy as np
+import utils
 
 
 class L1OutUB(nn.Module):  # naive upper bound
     """
-      This is a class that implements the estimator [13] to I(X,Y).
+      This is a class that implements the estimator [14] to I(X,Y).
       :param x_dim: dimensions of samples from X
       :type x_dim:  int
       :param y_dim:dimensions of samples from Y
@@ -16,8 +18,8 @@ class L1OutUB(nn.Module):  # naive upper bound
       References
       ----------
 
-      .. [13] Cheng, P., Hao, W., Dai, S., Liu, J., Gan, Z., & Carin, L. (2020, November). Club: A contrastive
-      log-ratio upper bound of mutual information. In International conference on machine learning (pp. 1779-1788). PMLR.
+      .. [14] Poole, B., Ozair, S., Van Den Oord, A., Alemi, A., and ucker, G. On variational bounds of mutual information.
+    In ICML, 2019.
     """
 
     def __init__(self, x_dim: int, y_dim: int, hidden_size: int):
@@ -50,7 +52,7 @@ class L1OutUB(nn.Module):  # naive upper bound
             dim=-1)  # [nsample, nsample]
 
         diag_mask = torch.ones([batch_size]).diag().unsqueeze(-1).to(self.device) * (-20.)
-        negative = log_sum_exp(all_probs + diag_mask, dim=0) - np.log(batch_size - 1.)  # [nsample]
+        negative = utils.log_sum_exp(all_probs + diag_mask, dim=0) - np.log(batch_size - 1.)  # [nsample]
 
         return (positive - negative).mean()
 

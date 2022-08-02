@@ -6,7 +6,7 @@ import numpy as np
 
 class NWJ(nn.Module):
     """
-      This is a class that implements the estimator [13] to I(X,Y).
+      This is a class that implements the estimator [16] to I(X,Y).
       :param x_dim: dimensions of samples from X
       :type x_dim:  int
       :param y_dim:dimensions of samples from Y
@@ -17,8 +17,8 @@ class NWJ(nn.Module):
       References
       ----------
 
-      .. [13] Cheng, P., Hao, W., Dai, S., Liu, J., Gan, Z., & Carin, L. (2020, November). Club: A contrastive
-      log-ratio upper bound of mutual information. In International conference on machine learning (pp. 1779-1788). PMLR.
+      .. [16] Nguyen, X., Wainwright, M. J., and Jordan, M. I. Estimating divergence functionals and the
+      likelihood ratio by convex risk minimization. IEEE Transactions on Information Theory, 2010.
     """
 
     def __init__(self, x_dim: int, y_dim: int, hidden_size: int):

@@ -6,7 +6,7 @@ import numpy as np
 
 class TUBA(nn.Module):
     """
-      This is a class that implements the estimator [13] to I(X,Y).
+      This is a class that implements the estimator [15] to I(X,Y).
       :param x_dim: dimensions of samples from X
       :type x_dim:  int
       :param y_dim:dimensions of samples from Y
@@ -17,8 +17,9 @@ class TUBA(nn.Module):
       References
       ----------
 
-      .. [13] Cheng, P., Hao, W., Dai, S., Liu, J., Gan, Z., & Carin, L. (2020, November). Club: A contrastive
-      log-ratio upper bound of mutual information. In International conference on machine learning (pp. 1779-1788). PMLR.
+      .. [15] Poole, B., Ozair, S., Van Den Oord, A., Alemi, A., and Tucker, G. On variational bounds of mutual
+      information. In Chaudhuri, K. and Salakhutdinov, R. (eds.), Proceedings of the 36th International Conference on
+      Machine Learning, volume 97 of Proceedings of Machine Learning Research, pp. 5171–5180. PMLR, 09–15 Jun 2019.
     """
 
     def __init__(self, x_dim: int, y_dim: int, hidden_size: int):
