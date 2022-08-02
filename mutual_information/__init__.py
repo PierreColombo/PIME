@@ -4,7 +4,6 @@ from entropy.cond_knife import ConditionalKNIFE
 from club import CLUB, CLUBSample
 from gaussian_fisher_rao import FisherRao
 from gaussian_frechet import Frechet
-from gaussian_mi import MIGaussian
 from gaussian_js import JensenShannon
 from infonce import InfoNCE
 from entropy.knife import KNIFE
@@ -22,7 +21,6 @@ CONTINUOUS_ESTIMATORS = {
     'cond_knife': ConditionalKNIFE,
     'gaussian_frechet': Frechet,
     'gaussian_fisher_rao': FisherRao,
-    'gaussian_mi': MIGaussian,
     'gaussian_js': JensenShannon,
     'infonce': InfoNCE,
     'knife': KNIFE,

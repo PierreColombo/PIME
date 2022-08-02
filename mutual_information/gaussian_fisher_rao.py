@@ -1,6 +1,7 @@
 from utils.continuous_estimator import ContinuousEstimator
 from utils.helper import compute_mean, compute_cov
 import torch
+from torch import Tensor
 
 class FisherRao(ContinuousEstimator):
     """
@@ -21,10 +22,12 @@ class FisherRao(ContinuousEstimator):
     def __init__(self, name):
         self.name = name
 
-    def forward(self, ref_dist, hypo_dist):
+    def forward(self, X:Tensor, Y:Tensor)->Tensor:
         """
-        :param ref_dist: continuous input reference distribution
-        :param hypo_dist: continuous hypothesis reference distribution
+        :param X: Input distribution
+        :type X: Tensor (B*hidden size)
+        :param Y: Input distribution
+        :type Y: Tensor (B*hidden size)
         :return:  Fisher Rao distance between the reference and hypothesis distribution under
         the Multivariate Gaussian Hypothesis
         """
@@ -33,10 +36,11 @@ class FisherRao(ContinuousEstimator):
         """
         # TODO : handle the case of 0
 
-        self.ref_mean = compute_mean(ref_dist)
-        self.ref_cov = compute_cov(ref_dist)
-        self.hypo_mean = compute_mean(hypo_dist)
-        self.hypo_cov = compute_cov(hypo_dist)
+        self.ref_mean = compute_mean(X)
+        self.ref_cov = compute_cov(X)
+        self.hypo_mean = compute_mean(Y)
+        self.hypo_cov = compute_cov(Y)
+
 
         first = (((self.ref_mean - self.hypo_mean) ** 2) / 2 + (
                 torch.sqrt(torch.diag(self.hypo_cov)) + torch.sqrt(torch.diag(self.ref_cov))) ** 2) ** (1 / 2)
