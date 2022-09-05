@@ -1,4 +1,4 @@
-from utils import DiscreteEstimator
+from utils.discrete_estimator import DiscreteEstimator
 from torch import Tensor
 
 
