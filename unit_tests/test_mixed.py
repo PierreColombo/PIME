@@ -1,10 +1,9 @@
 # TODO à faire pour malik
-from divergence import *
-from entropy import *
-from mutual_information import *
 from mutual_information.linear_mixed_estimator import LinearEstimator
 from utils import *
 import torch
+import math
+import numpy as np
 
 def unit_tests():
 
