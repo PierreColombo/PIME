@@ -1,6 +1,8 @@
 import torch.nn as nn
 import torch
-
+from utils import *
+from mi_doe import MIDOE, ConditionalPDF
+from entropy import KNIFE, ConditionalKNIFE
 
 class MIKnife(nn.Module):
     """

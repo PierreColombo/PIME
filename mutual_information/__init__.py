@@ -1,12 +1,12 @@
 import sys
 sys.path.append('continuous/')
-from entropy.cond_knife import ConditionalKNIFE
+from entropy import ConditionalKNIFE
 from club import CLUB, CLUBSample
 from gaussian_fisher_rao import FisherRao
 from gaussian_frechet import Frechet
 from gaussian_js import JensenShannon
 from infonce import InfoNCE
-from entropy.knife import KNIFE
+from entropy import KNIFE
 from l1out import L1OutUB
 from mi_doe import MIDOE
 from mi_knife import MIKnife

@@ -1,12 +1,12 @@
 import torch.nn as nn
 from torch import Tensor
-from utils.helper import PDF, compute_negative_ln_prob
+from utils import *
 import torch
 
 
 class FF_DOE(nn.Module):
 
-    def __init__(self, dim_input, dim_output, dropout_rate=0):
+    def __init__(self, dim_input, dim_output, dropout_rate=0.):
         super(FF_DOE, self).__init__()
         self.residual_connection = False
         self.num_layers = 1
