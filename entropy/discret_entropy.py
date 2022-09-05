@@ -1,4 +1,4 @@
-from divergence.discrete_estimator import DiscreteEstimator
+from utils import DiscreteEstimator
 import torch
 from torch import Tensor
 

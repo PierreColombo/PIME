@@ -1,10 +1,13 @@
-from abstract_class import ContinuousEstimator
+from utils import ContinuousEstimator
 import torch.nn as nn
 import torch
 import numpy as np
 
 
 # Estimating MI as a difference of Continous Entropy
+from mutual_information.mi_doe import ConditionalPDF
+from utils.helper import PDF
+
 
 class MarginalKNIFE(nn.Module):
     def __init__(self, args, zc_dim, zd_dim, init_samples=None):
