@@ -9,22 +9,22 @@ import sys
 sys.path.insert(0, pathlib.Path(__file__).parents[2].resolve().as_posix())
 
 sys.path.append(os.path.abspath(
-    os.path.join(__file__, "../../pimms")
+    os.path.join(__file__, "../../pime")
 ))
 
-sys.path.append(os.path.join(__file__, "../../pimms/continuous_gaussian"))
-sys.path.append(os.path.join(__file__, "../../pimms/divergence"))
-sys.path.append(os.path.join(__file__, "../../pimms/entropy"))
-sys.path.append(os.path.join(__file__, "../../pimms/misc"))
-sys.path.append(os.path.join(__file__, "../../pimms/mutual_information"))
-sys.path.append(os.path.join(__file__, "../../pimms/unit_tests"))
-sys.path.append(os.path.join(__file__, "../pimms/continuous_gaussian"))
-sys.path.append(os.path.join(__file__, "../pimms/divergence"))
-sys.path.append(os.path.join(__file__, "../pimms/entropy"))
-sys.path.append(os.path.join(__file__, "../pimms/misc"))
-sys.path.append(os.path.join(__file__, "../pimms/mutual_information"))
-sys.path.append(os.path.join(__file__, "../pimms/unit_tests"))
-project = 'PIM'
+sys.path.append(os.path.join(__file__, "../../pime/continuous_gaussian"))
+sys.path.append(os.path.join(__file__, "../../pime/divergence"))
+sys.path.append(os.path.join(__file__, "../../pime/entropy"))
+sys.path.append(os.path.join(__file__, "../../pime/misc"))
+sys.path.append(os.path.join(__file__, "../../pime/mutual_information"))
+sys.path.append(os.path.join(__file__, "../../pime/unit_tests"))
+sys.path.append(os.path.join(__file__, "../pime/continuous_gaussian"))
+sys.path.append(os.path.join(__file__, "../pime/divergence"))
+sys.path.append(os.path.join(__file__, "../pime/entropy"))
+sys.path.append(os.path.join(__file__, "../pime/misc"))
+sys.path.append(os.path.join(__file__, "../pime/mutual_information"))
+sys.path.append(os.path.join(__file__, "../pime/unit_tests"))
+project = 'PIME'
 copyright = '2022, Pierre COLOMBO'
 author = 'Pierre Colombo, Malik Boudiaf'
 
