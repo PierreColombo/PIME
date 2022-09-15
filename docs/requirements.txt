@@ -1,0 +1,8 @@
+sphinxcontrib-bibtex
+matplotlib==3.5.2
+numpy
+pandas
+scipy
+seaborn
+torch==1.11.0
+tqdm==4.64.0
