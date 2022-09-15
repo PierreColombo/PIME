@@ -1,2 +1,2 @@
-from pimms.misc.i_projection import IProjector
-from pimms.misc.symmetrization import JensenSymmetrizationEstimator,JeffreySymmetrizationEstimator
+from pime.misc.i_projection import IProjector
+from pime.misc.symmetrization import JensenSymmetrizationEstimator,JeffreySymmetrizationEstimator
