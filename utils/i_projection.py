@@ -10,7 +10,7 @@ class IProjector(DiscreteEstimator):
 
        :param name: Name of the divergence usefull to save the results
        :type name: str
-       :param discret_estimator: Estimator to symetrize
+       :param discret_estimator: Estimator to symmetrize
        :param kwargs: divergence parameters
        :type kwargs: dict
 

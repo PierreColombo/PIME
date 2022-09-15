@@ -2,15 +2,15 @@ from utils.discrete_estimator import DiscreteEstimator
 from torch import Tensor
 
 
-class JeffreySymetrizationEstimator(DiscreteEstimator):
+class JeffreySymmetrizationEstimator(DiscreteEstimator):
     """
-    This is a class that implements the Jeffrey Symetrization trick applied to a divergence between two discrete
+    This is a class that implements the Jeffrey Symmetrization trick applied to a divergence between two discrete
      distributions. See [9] for a detailled survey it has been used to measure similarity between sentences
       among others (see [2]).
 
     :param name: Name of the divergence usefull to save the results
     :type name: str
-    :param discret_estimator: Estimator to symetrize
+    :param discret_estimator: Estimator to symmetrize
     :type discret_estimator: DiscreteEstimator
     :param kwargs: divergence parameters
     :type kwargs: dict
@@ -37,20 +37,20 @@ class JeffreySymetrizationEstimator(DiscreteEstimator):
         :type X: tensor of size (B*S) where B is the size of the batch and S the size of the support.
         :param Y: discreate hypothesis reference distribution over the discret support
         :type Y: tensor of size (B*S) where B is the size of the batch and S the size of the support.
-        :return:  divergence between X and Y symetrized using the Jensen Trick
+        :return:  divergence between X and Y symmetrized using the Jensen Trick
         """
         return (self.discret_estimator.predict(X, Y) + self.discret_estimator.predict(Y, X)) / 2
 
 
-class JensenSymetrizationEstimator(DiscreteEstimator):
+class JensenSymmetrizationEstimator(DiscreteEstimator):
     """
-    This is a class that implements the Jensen Shannon Symetrization trick applied to a divergence between two discrete
+    This is a class that implements the Jensen Shannon Symmetrization trick applied to a divergence between two discrete
      distributions. See [9] for a detailled survey it has been used to measure similarity between sentences
       among others (see [2]).
 
     :param name: Name of the divergence usefull to save the results
     :type name: str
-    :param discret_estimator: Estimator to symetrize
+    :param discret_estimator: Estimator to symmetrize
     :param kwargs: divergence parameters
     :type kwargs: dict
 
@@ -76,6 +76,6 @@ class JensenSymetrizationEstimator(DiscreteEstimator):
         :type X: tensor of size (B*S) where B is the size of the batch and S the size of the support.
         :param Y: discreate hypothesis reference distribution over the discret support
         :type Y: tensor of size (B*S) where B is the size of the batch and S the size of the support.
-        :return:  divergence between X and Y symetrized using the Jensen Trick
+        :return:  divergence between X and Y symmetrized using the Jensen Trick
         """
         return (self.discret_estimator.predict(Y, (X + Y) / 2) + self.discret_estimator.predict(X, (X + Y) / 2)) / 2
