@@ -1,0 +1,19 @@
+[project]
+name = "PIME"
+version = "0.0.1"
+authors = [
+  { name="Colombo Pierre, Malik Boudiaf", email="colombo.pierre@gmail.com"},
+]
+description = "PIME: Python Information Measure"
+readme = "README.md"
+license = { file="LICENSE" }
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+"Homepage" = "https://pime.readthedocs.io/en/latest/"
+"Bug Tracker" = "https://github.com/PierreColombo/PIME"
