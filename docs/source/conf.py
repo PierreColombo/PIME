@@ -49,9 +49,9 @@ todo_include_todos = True
 napoleon_numpy_docstring = True
 source_suffix = ['.rst', '.md']
 
-bibtex_bibfiles = [os.path.abspath(
-    os.path.join(__file__, "pim")
-)]
+bibtex_bibfiles = [
+    str(pathlib.Path(__file__).parent.parent.parent.parent / 'overleaf' / 'lib.bib'),
+]
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3/', None),
     'sphinx': ('https://www.sphinx-doc.org/en/master/', None),
