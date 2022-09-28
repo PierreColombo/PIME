@@ -46,11 +46,11 @@ napoleon_google_docstring = False
 napoleon_numpy_docstring = True
 autosummary_generate = True
 todo_include_todos = True
-napoleon_numpy_docstring = True
 source_suffix = ['.rst', '.md']
 
 bibtex_bibfiles = [
-    str(pathlib.Path(__file__).parent.parent.parent.parent / 'overleaf' / 'lib.bib'),
+    str(pathlib.Path(__file__).parent.parent / 'bib' / 'IEEEabrv.bib'),
+    str(pathlib.Path(__file__).parent.parent / 'bib' / 'lib.bib'),
 ]
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3/', None),

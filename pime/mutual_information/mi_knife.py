@@ -6,7 +6,7 @@ from pime.entropy.cond_knife import ConditionalKNIFE
 
 class MIKnife(nn.Module):
     """
-    This is a class that implements the estimator to I(X;Y) using the Kernel Estimator introduce in [20].
+    This is a class that implements the estimator to I(X;Y) using the Kernel Estimator introduce in :cite:t:`pichler2022differential`.
       Two modes  are possible:
          * Using two Kernels to compute I(X;Y) = H(X) - H(X|Y)
          * Using three Kernels to compute  I(X;Y) = - H(X,Y) + H(X) + H(Y)
@@ -18,10 +18,7 @@ class MIKnife(nn.Module):
      :param hidden_size: the dimension of the hidden layer of the approximation network q(Y|X)
       :type hidden_size: int
 
-    References
-    ----------
-
-      .. [20] Pichler, G., Colombo, P., Boudiaf, M., Koliander, G., & Piantanida, P. (2022). KNIFE: Kernelized-Neural Differential Entropy Estimation. ICML 2022.
+    .. bibliography::
     """
 
     def __init__(self, x_size, y_size, number_of_samples=128,
