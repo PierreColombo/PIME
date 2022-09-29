@@ -7,21 +7,20 @@ from pime.entropy.cond_knife import ConditionalKNIFE
 class MIKnife(nn.Module):
     """
     This is a class that implements the estimator to I(X;Y) using the Kernel Estimator introduce in :cite:t:`pichler2022differential`.
-      Two modes  are possible:
-         * Using two Kernels to compute I(X;Y) = H(X) - H(X|Y)
-         * Using three Kernels to compute  I(X;Y) = - H(X,Y) + H(X) + H(Y)
+    Two modes  are possible:
+    * Using two Kernels to compute I(X;Y) = H(X) - H(X|Y)
+    * Using three Kernels to compute  I(X;Y) = - H(X,Y) + H(X) + H(Y)
 
-      :param x_dim: dimensions of samples from X
-      :type x_dim:  int
-      :param y_dim:dimensions of samples from Y
-      :type y_dim: int
-     :param hidden_size: the dimension of the hidden layer of the approximation network q(Y|X)
-      :type hidden_size: int
+    :param x_size: dimensions of samples from X
+    :type x_size: int
+    :param y_size: dimensions of samples from Y
+    :type y_size: int
+    :param number_of_samples: number of samples used for the kernel
+    :type number_of_samples: int
 
-    .. bibliography::
     """
 
-    def __init__(self, x_size, y_size, number_of_samples=128,
+    def __init__(self, x_size: int, y_size, number_of_samples=128,
                  device=torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
                  batch_size=128,
                  # [K, d] to initialize the kernel :) so K is the number of points :)

@@ -1,10 +1,10 @@
-Usage
-=====
+Usage Examples
+=======
 
 .. _installation:
 
 Installation
-------------
+-------------
 
 To use Lumache, first install it using pip:
 
@@ -14,7 +14,7 @@ To use Lumache, first install it using pip:
 
 
 Computing MI measure between two continuous R.V
-----------------
+---------------------------------------------------
 >>> import pime
 >>> import torch
 >>> N = 5

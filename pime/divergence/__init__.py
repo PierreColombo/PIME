@@ -5,3 +5,12 @@ from pime.divergence.fisher_rao import FisherRao
 from pime.divergence.kl_div import KullbackLeiblerDivergence
 from pime.divergence.lp import LP
 from pime.divergence.renyi_div import RenyiDivergence
+
+__all__ = ["ABDivergence",
+           "AlphaDivergence",
+           "BetaDivergence",
+           "FisherRao",
+           "KullbackLeiblerDivergence",
+           "LP",
+           "RenyiDivergence",
+           ]

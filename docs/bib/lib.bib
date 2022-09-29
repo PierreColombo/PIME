@@ -176,7 +176,7 @@
 
 @Article{mine,
   author  = {Belghazi, Mohamed Ishmael and Baratin, Aristide and Rajeswar, Sai and Ozair, Sherjil and Bengio, Yoshua and Courville, Aaron and Hjelm, R Devon},
-  title   = {Mine: mutual information neural estimation},
+  title   = {Mine: Mutual Information Neural Estimation},
   journal = {arXiv preprint arXiv:1801.04062},
   year    = {2018},
 }
@@ -281,9 +281,10 @@
 @InProceedings{cheng2020club,
   author    = {Cheng, Pengyu and Hao, Weituo and Dai, Shuyang and Liu, Jiachang and Gan, Zhe and Carin, Lawrence},
   booktitle = {International Conference on Machine Learning},
-  title     = {Club: A contrastive log-ratio upper bound of mutual information},
+  title     = {{CLUB}: A contrastive log-ratio upper bound of mutual information},
   pages     = {1779--1788},
   year      = {2020},
+  url       = {https://proceedings.mlr.press/v119/cheng20b.html}, 
 }
 
 @InProceedings{pmlr-v97-poole19a,
@@ -340,9 +341,98 @@
   volume       = {162},
   abstract     = {Mutual Information (MI) has been widely used as a loss regularizer for training neural networks. This has been particularly effective when learn disentangled or compressed representations of high dimensional data. However, differential entropy (DE), another fundamental measure of information, has not found widespread use in neural network training. Although DE offers a potentially wider range of applications than MI, off-the-shelf DE estimators are either non differentiable, computationally intractable or fail to adapt to changes in the underlying distribution. These drawbacks prevent them from being used as regularizers in neural networks training. To address shortcomings in previously proposed estimators for DE, here we introduce KNIFE, a fully parameterized, differentiable kernel-based estimator of DE. The flexibility of our approach also allows us to construct KNIFE-based estimators for conditional (on either discrete or continuous variables) DE, as well as MI. We empirically validate our method on high-dimensional synthetic data and further apply it to guide the training of neural networks for real-world tasks. Our experiments on a large variety of tasks, including visual domain adaptation, textual fair classification, and textual fine-tuning demonstrate the effectiveness of KNIFE-based estimation. Code can be found at https://github.com/g-pichler/knife.},
   creationdate = {2022-09-28T14:05:57},
-  file         = {:pichler22a.pdf:PDF},
-  groups       = {MI Learning},
-  owner        = {georg},
   pdf          = {https://proceedings.mlr.press/v162/pichler22a/pichler22a.pdf},
   url          = {https://proceedings.mlr.press/v162/pichler22a.html},
+}
+
+@Article{nguyen2010estimating,
+  author       = {Nguyen, XuanLong and Wainwright, Martin J and Jordan, Michael I},
+  journal      = {IEEE Transactions on Information Theory},
+  title        = {Estimating divergence functionals and the likelihood ratio by convex risk minimization},
+  year         = {2010},
+  number       = {11},
+  pages        = {5847--5861},
+  volume       = {56},
+  creationdate = {2019-07-04T00:00:00},
+  publisher    = {IEEE},
+}
+
+@InProceedings{belghazi2018mutual,
+  author       = {Belghazi, Mohamed Ishmael and Baratin, Aristide and Rajeshwar, Sai and Ozair, Sherjil and Bengio, Yoshua and Courville, Aaron and Hjelm, Devon},
+  booktitle    = {International Conference on Machine Learning},
+  title        = {Mutual Information Neural Estimation},
+  year         = {2018},
+  address      = {Stockholmsm{\"{a}}ssan, Stockholm Sweden},
+  editor       = {Dy, Jennifer and Krause, Andreas},
+  month        = jul,
+  pages        = {531--540},
+  publisher    = {PMLR},
+  series       = {Proceedings of Machine Learning Research},
+  volume       = {80},
+  abstract     = {We argue that the estimation of mutual information between high dimensional continuous random variables can be achieved by gradient descent over neural networks. We present a Mutual Information Neural Estimator (MINE) that is linearly scalable in dimensionality as well as in sample size, trainable through back-prop, and strongly consistent. We present a handful of applications on which MINE can be used to minimize or maximize mutual information. We apply MINE to improve adversarially trained generative models. We also use MINE to implement the Information Bottleneck, applying it to supervised classification; our results demonstrate substantial improvement in flexibility and performance in these settings.},
+  creationdate = {2019-12-17T00:00:00},  
+  url          = {http://proceedings.mlr.press/v80/belghazi18a.html},
+}
+
+@inproceedings{alemi2017deep,
+title={Deep Variational Information Bottleneck},
+author={Alexander A. Alemi and Ian Fischer and Joshua V. Dillon and Kevin Murphy},
+booktitle={International Conference on Learning Representations},
+year={2017},
+url={https://openreview.net/forum?id=HyxQzBceg}
+}
+
+@inproceedings{colombo2021code,
+    title = "Code-switched inspired losses for spoken dialog representations",
+    author = "Colombo, Pierre  and
+      Chapuis, Emile  and
+      Labeau, Matthieu  and
+      Clavel, Chlo{\'e}",
+    booktitle = "Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing",
+    month = nov,
+    year = "2021",
+    address = "Online and Punta Cana, Dominican Republic",
+    publisher = "Association for Computational Linguistics",
+    url = "https://aclanthology.org/2021.emnlp-main.656",
+    doi = "10.18653/v1/2021.emnlp-main.656",
+    pages = "8320--8337",
+    abstract = "Spoken dialogue systems need to be able to handle both multiple languages and multilinguality inside a conversation (\textit{e.g} in case of code-switching). In this work, we introduce new pretraining losses tailored to learn generic multilingual spoken dialogue representations. The goal of these losses is to expose the model to code-switched language. In order to scale up training, we automatically build a pretraining corpus composed of multilingual conversations in five different languages (French, Italian, English, German and Spanish) from OpenSubtitles, a huge multilingual corpus composed of 24.3G tokens. We test the generic representations on MIAM, a new benchmark composed of five dialogue act corpora on the same aforementioned languages as well as on two novel multilingual tasks (\textit{i.e} multilingual mask utterance retrieval and multilingual inconsistency identification). Our experiments show that our new losses achieve a better performance in both monolingual and multilingual settings.",
+}
+
+@InProceedings{chapuis2020hierarchical,
+  author       = {Chapuis, Emile and Colombo, Pierre and Manica, Matteo and Labeau, Matthieu and Clavel, Chlo{\'e}},
+  booktitle    = {Findings of the Association for Computational Linguistics: EMNLP 2020},
+  title        = {Hierarchical Pre-training for Sequence Labelling in Spoken Dialog},
+  year         = {2020},
+  address      = {Online},
+  month        = nov,
+  pages        = {2636--2648},
+  publisher    = {Association for Computational Linguistics},
+  abstract     = {Sequence labelling tasks like Dialog Act and Emotion/Sentiment identification are a key component of spoken dialog systems. In this work, we propose a new approach to learn generic representations adapted to spoken dialog, which we evaluate on a new benchmark we call Sequence labellIng evaLuatIon benChmark fOr spoken laNguagE benchmark (SILICONE). SILICONE is model-agnostic and contains 10 different datasets of various sizes. We obtain our representations with a hierarchical encoder based on transformer architectures, for which we extend two well-known pre-training objectives. Pre-training is performed on OpenSubtitles: a large corpus of spoken dialog containing over 2.3 billion of tokens. We demonstrate how hierarchical encoders achieve competitive results with consistently fewer parameters compared to state-of-the-art models and we show their importance for both pre-training and fine-tuning.},
+  creationdate = {2022-09-29T14:05:13},
+  doi          = {10.18653/v1/2020.findings-emnlp.239},
+  url          = {https://aclanthology.org/2020.findings-emnlp.239},
+}
+
+@InProceedings{kong2020mutual,
+  author       = {Lingpeng Kong and Cyprien de Masson d'Autume and Lei Yu and Wang Ling and Zihang Dai and Dani Yogatama},
+  booktitle    = {International Conference on Learning Representations},
+  title        = {A Mutual Information Maximization Perspective of Language Representation Learning},
+  year         = {2020},
+  creationdate = {2022-09-29T14:07:51},
+  url          = {https://openreview.net/forum?id=Syx79eBKwr},
+}
+
+
+@Article{mcallester2018formal,
+  author       = {David McAllester and Karl Stratos},
+  journal      = {arXiv preprint},
+  title        = {Formal Limitations on the Measurement of Mutual Information},
+  year         = {2018},
+  abstract     = {Motivated by applications to unsupervised learning, we consider the problem of measuring mutual information. Recent analysis has shown that naive kNN estimators of mutual information have serious statistical limitations motivating more refined methods. In this paper we prove that serious statistical limitations are inherent to any measurement method. More specifically, we show that any distribution-free high-confidence lower bound on mutual information cannot be larger than $O(\ln N)$ where $N$ is the size of the data sample. We also analyze the Donsker-Varadhan lower bound on KL divergence in particular and show that, when simple statistical considerations are taken into account, this bound can never produce a high-confidence value larger than $\ln N$. While large high-confidence lower bounds are impossible, in practice one can use estimators without formal guarantees. We suggest expressing mutual information as a difference of entropies and using cross-entropy as an entropy estimator. We observe that, although cross-entropy is only an upper bound on entropy, cross-entropy estimates converge to the true cross-entropy at the rate of $1/\sqrt{N}$.},
+  creationdate = {2019-09-22T00:00:00},
+  date         = {2018-11-10},
+  eprint       = {http://arxiv.org/abs/1811.04251v4},
+  eprintclass  = {cs.IT},
+  eprinttype   = {arXiv},
 }

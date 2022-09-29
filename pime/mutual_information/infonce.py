@@ -6,24 +6,19 @@ from torch import Tensor
 
 class InfoNCE(nn.Module):
     """
-    This is a class that implements the estimator [14] to I(X,Y).
-      InfoNCE is linked to pretraining of Neural Networks see [22,23,24].
+    This is a class that implements the estimator for I(X,Y) from :cite:t:`nce`.
+
+    InfoNCE is linked to pretraining of Neural Networks see :cite:t:`colombo2021code`,
+    :cite:t:`chapuis2020hierarchical`, and :cite:t:`kong2020mutual`.
 
 
-      :param x_dim: dimensions of samples from X
-      :type x_dim:  int
-      :param y_dim:dimensions of samples from Y
-      :type y_dim: int
-     :param hidden_size: the dimension of the hidden layer of the approximation network q(Y|X)
-      :type hidden_size: int
+    :param x_dim: dimensions of samples from X
+    :type x_dim:  int
+    :param y_dim: dimensions of samples from Y
+    :type y_dim: int
+    :param hidden_size: the dimension of the hidden layer of the approximation network q(Y|X)
+    :type hidden_size: int
 
-    References
-    ----------
-
-      .. [14] Oord, A. V. D., Li, Y., & Vinyals, O. (2018). Representation learning with contrastive predictive coding. arXiv preprint arXiv:1807.03748
-      .. [22] Colombo, P., Chapuis, E., Labeau, M., & Clavel, C. (2021, November). Code-switched inspired losses for spoken dialog representations. In Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing (pp. 8320-8337).
-      .. [23]  Chapuis, E., Colombo, P., Manica, M., Labeau, M., & Clavel, C. (2020). Hierarchical pre-training for sequence labelling in spoken dialog. Findings of EMNLP 2020.
-      .. [24] Kong, L., d'Autume, C. D. M., Ling, W., Yu, L., Dai, Z., & Yogatama, D. (2019). A mutual information maximization perspective of language representation learning. ICLR 2020.
     """
 
     def __init__(self, x_dim: int, y_dim: int, hidden_size: int):

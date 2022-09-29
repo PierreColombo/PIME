@@ -6,19 +6,15 @@ import numpy as np
 
 class TUBA(nn.Module):
     """
-    This is a class that implements the estimator [15] to I(X,Y).
+    This is a class that implements the estimator for I(X,Y) of :cite:t:`pmlr-v97-poole19a`.
 
-      :param x_dim: dimensions of samples from X
-      :type x_dim:  int
-      :param y_dim:dimensions of samples from Y
-      :type y_dim: int
-     :param hidden_size: the dimension of the hidden layer of the approximation network q(Y|X)
-      :type hidden_size: int
+    :param x_dim: dimensions of samples from X
+    :type x_dim:  int
+    :param y_dim: dimensions of samples from Y
+    :type y_dim: int
+    :param hidden_size: the dimension of the hidden layer of the approximation network q(Y|X)
+    :type hidden_size: int
 
-    References
-    ----------
-
-    .. [15] Poole, B., Ozair, S., Van Den Oord, A., Alemi, A., and Tucker, G. On variational bounds of mutual information. In Chaudhuri, K. and Salakhutdinov, R. (eds.), Proceedings of the 36th International Conference on Machine Learning, volume 97 of Proceedings of Machine Learning Research, pp. 5171–5180. PMLR, 09–15 Jun 2019.
     """
 
     def __init__(self, x_dim: int, y_dim: int, hidden_size: int):

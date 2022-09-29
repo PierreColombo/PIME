@@ -6,19 +6,15 @@ import numpy as np
 
 class NWJ(nn.Module):
     """
-    This is a class that implements the estimator [16] to I(X,Y).
+    This is a class that implements the estimator for I(X,Y) in :cite:t:`nguyen2010estimating`.
 
-      :param x_dim: dimensions of samples from X
-      :type x_dim:  int
-      :param y_dim:dimensions of samples from Y
-      :type y_dim: int
-     :param hidden_size: the dimension of the hidden layer of the approximation network q(Y|X)
-      :type hidden_size: int
+    :param x_dim: dimensions of samples from X
+    :type x_dim:  int
+    :param y_dim: dimensions of samples from Y
+    :type y_dim: int
+    :param hidden_size: the dimension of the hidden layer of the approximation network q(Y|X)
+    :type hidden_size: int
 
-    References
-    ----------
-
-    .. [16] Nguyen, X., Wainwright, M. J., and Jordan, M. I. Estimating divergence functionals and the likelihood ratio by convex risk minimization. IEEE Transactions on Information Theory, 2010.
     """
 
     def __init__(self, x_dim: int, y_dim: int, hidden_size: int):

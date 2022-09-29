@@ -7,19 +7,15 @@ from ..misc import utils
 
 class L1OutUB(nn.Module):  # naive upper bound
     """
-    This is a class that implements the estimator [14] to I(X,Y).
+    This is a class that implements the estimator for I(X,Y) from :cite:t:`pmlr-v97-poole19a`.
 
-      :param x_dim: dimensions of samples from X
-      :type x_dim:  int
-      :param y_dim:dimensions of samples from Y
-      :type y_dim: int
-     :param hidden_size: the dimension of the hidden layer of the approximation network q(Y|X)
-      :type hidden_size: int
+    :param x_dim: dimensions of samples from X
+    :type x_dim:  int
+    :param y_dim: dimensions of samples from Y
+    :type y_dim: int
+    :param hidden_size: the dimension of the hidden layer of the approximation network q(Y|X)
+    :type hidden_size: int
 
-    References
-    ----------
-
-      .. [14] Poole, B., Ozair, S., Van Den Oord, A., Alemi, A., and ucker, G. On variational bounds of mutual information. In ICML, 2019.
     """
 
     def __init__(self, x_dim: int, y_dim: int, hidden_size: int):

@@ -5,21 +5,15 @@ from torch import Tensor
 
 class MINE(nn.Module):
     """
-    This is a class that implements the estimator [17] to I(X,Y).
-      It has been used in many applications including multimodal learning.
+    This is a class that implements the estimator for I(X,Y) from :cite:t:`belghazi2018mutual`.
+    It has been used in many applications including multimodal learning.
 
-      :param x_dim: dimensions of samples from X
-      :type x_dim:  int
-      :param y_dim:dimensions of samples from Y
-      :type y_dim: int
-     :param hidden_size: the dimension of the hidden layer of the approximation network q(Y|X)
-      :type hidden_size: int
-
-    References
-    ----------
-
-    .. [17] Belghazi, I., Rajeswar, S., Baratin, A., Hjelm, R. D., and Courville, A. C. MINE: mutual information neural estimation. arXiv, abs/1801.04062, 2018.
-    .. [21] Colombo, P., Chapuis, E., Labeau, M., & Clavel, C. (2021). Improving multimodal fusion via mutual dependency maximisation. EMNLP2021
+    :param x_dim: dimensions of samples from X
+    :type x_dim:  int
+    :param y_dim: dimensions of samples from Y
+    :type y_dim: int
+    :param hidden_size: the dimension of the hidden layer of the approximation network q(Y|X)
+    :type hidden_size: int
 
     """
 

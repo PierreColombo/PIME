@@ -6,19 +6,15 @@ from torch import Tensor
 
 class VarUB(nn.Module):
     """
-    This is a class that implements the estimator [13] to I(X,Y).
+    This is a class that implements the estimator for I(X,Y) in :cite:t:`alemi2017deep`.
 
-      :param x_dim: dimensions of samples from X
-      :type x_dim:  int
-      :param y_dim:dimensions of samples from Y
-      :type y_dim: int
-     :param hidden_size: the dimension of the hidden layer of the approximation network q(Y|X)
-      :type hidden_size: int
+    :param x_dim: dimensions of samples from X
+    :type x_dim:  int
+    :param y_dim:dimensions of samples from Y
+    :type y_dim: int
+    :param hidden_size: the dimension of the hidden layer of the approximation network q(Y|X)
+    :type hidden_size: int
 
-    References
-    ----------
-
-      .. [18] Alemi, A. A., Fischer, I., Dillon, J. V., and Murphy, K. Deep variational information bottleneck. arXiv,abs/1612.00410, 2016.
     """
 
     def __init__(self, x_dim: int, y_dim: int, hidden_size: int):

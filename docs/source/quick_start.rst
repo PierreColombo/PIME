@@ -1,4 +1,6 @@
 Quick Start
-=====
+============
 
-.. _installation:
+.. _quick:
+
+sadfasfd

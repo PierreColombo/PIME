@@ -3,7 +3,7 @@ Welcome to PIME documentation!
 
 **PIM** PIM is an open source Python library providing easy to use Measure of Information (e.g., Mutual Information) for Machine Learning.
 
-Check out the :doc:`usage` section for further information, including
+Check out the :doc:`examples` section for further information, including
 how to :ref:`installation` the project.
 
 .. note::
@@ -12,9 +12,10 @@ how to :ref:`installation` the project.
 
 Contents
 --------
-
 .. toctree::
    quick_start
    examples
    api
-   contributors
+   about
+
+
