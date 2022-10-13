@@ -1,4 +1,8 @@
 # TODO à faire pour malik
+import torch
+import math
+import numpy as np
+
 
 def unit_tests():
 
