@@ -3,9 +3,11 @@ import torch
 import numpy as np
 
 
-# Estimating MI as a difference of Continous Entropy
+# Estimating MI as a difference of Continuous Entropies
 
 class MarginalKNIFE(nn.Module):
+    # TODO This is the same as pime.entropy.knife.KNIFE
+    #      We should only keep one, I think
     def __init__(self, args, zc_dim, zd_dim, init_samples=None):
 
         self.optimize_mu = args.optimize_mu
@@ -72,7 +74,8 @@ class MarginalKNIFE(nn.Module):
 
 
 class CondKernel(nn.Module):
-
+    # TODO this isn't really used anywhere
+    #      do we need this?
     def __init__(self, args, zc_dim, zd_dim, layers=1):
         super(CondKernel, self).__init__()
         self.K, self.d = args.cond_modes, zd_dim
@@ -115,23 +118,3 @@ class CondKernel(nn.Module):
     def forward(self, z_c, z_d):
         z = -self.logpdf(z_c, z_d)
         return torch.mean(z)
-
-
-class DoE(nn.Module):
-    def __init__(self, args, zc_dim, zd_dim):
-        super(DoE, self).__init__()
-        self.qY = PDF(zd_dim, 'gauss')
-        self.qY_X = ConditionalPDF(args, zd_dim, zd_dim, 'gauss')
-
-    def forward(self, z_c, z_d):  # samples have shape [sample_size, dim]
-        # shuffle and concatenate
-        hY = self.qY(z_d)
-        hY_X = self.qY_X(z_d, z_c)
-        mi = hY - hY_X
-        return mi, hY, hY_X
-
-    def learning_loss(self, z_c, z_d):
-        hY = self.qY(z_d)
-        hY_X = self.qY_X(z_d, z_c)
-        loss = hY + hY_X
-        return loss

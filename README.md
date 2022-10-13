@@ -13,7 +13,7 @@ Pour la To-do list: https://www.notion.so/305cd6b61831453db1e0f6b52b113d81?v=9df
 Pour Moi il y a deux parties: pour les measures de similarité
 
 
-Discret Discret (ce que j'ai codé dans InfoLM)
+Discrete Discrete (ce que j'ai codé dans InfoLM)
  - Entre deux measues:
     - F divergences
     - Fisher Rao
@@ -21,7 +21,7 @@ Discret Discret (ce que j'ai codé dans InfoLM)
  - Sur une seule measure
     - Entropy
 
-Continue Discret (ce que Malik a codé dans son TIM):
+Continue Discrete (ce que Malik a codé dans son TIM):
 
 
 Continue Continue:

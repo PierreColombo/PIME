@@ -4,19 +4,14 @@ from torch import Tensor
 
 class AlphaDivergence(DiscreteEstimator):
     """
-    This is a class that implements the AB divergences between two discrete distributions.
-      ABDivergences have been proposed in [3] and used to measure similarity between sentences among others (see [2]).
+    This is a class that implements the Alpha divergences between two discrete distributions.
+    Alpha divergences have been introduced in :cite:t:`Renyi2007Probability` and used to measure
+    similarity between sentences among others (see :cite:t:`Colombo2022InfoLM`).
 
-    :param name: Name of the divergence usefull to save the results
+    :param name: Name of the divergence useful to save the results
     :type name: str
-    :param alpha: Coefficient $\alpha$ of the Alpha Divergence divergence
+    :param alpha: Coefficient :math:`\\alpha` of the Alpha divergence
     :type alpha: float
-
-    References
-    ----------
-
-    .. [3] Rényi, A. (1970). Probability Theory. North-Holland Publishing Company, Amsterdam.
-    .. [2] Colombo, P. J. A., Clavel, C., & Piantanida, P. (2022, June). Infolm: A new metric to evaluate summarization & data2text generation. In Proceedings of the AAAI Conference on Artificial Intelligence (Vol. 36, No. 10, pp. 10554-10562).
     """
 
     def __init__(self, name: str, alpha: float):
@@ -28,11 +23,11 @@ class AlphaDivergence(DiscreteEstimator):
         """
         Predict divergence scores for the distributions.
 
-        :param X: discreate input reference distribution over the discret support
+        :param X: discrete input reference distribution over the discrete support
         :type X: tensor of size (B*S) where B is the size of the batch and S the size of the support.
-        :param Y: discreate hypothesis reference distribution over the discret support
+        :param Y: discrete hypothesis reference distribution over the discrete support
         :type Y: tensor of size (B*S) where B is the size of the batch and S the size of the support.
-        :return:  $\alpha$ divergence between X and Y
+        :return: alpha divergence between X and Y
         """
         alpha = self.alpha
 

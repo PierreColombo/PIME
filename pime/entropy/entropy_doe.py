@@ -3,6 +3,14 @@ import torch.nn as nn
 
 
 class EntropyDoe(nn.Module):
+    """
+    This class implements the entropy estimator of :cite:t:`mcallester2020formal`.
+
+    :param zc_dim: ambient space dimension (:math:`d` in :cite:p:`mcallester2020formal`)
+    :type zc_dim: int
+    :param pdf: Kernel PDF; can be either "gauss" or "logistic"
+    :type pdf: str
+    """
 
     def __init__(self, zc_dim, pdf='gauss'):
         super(EntropyDoe, self).__init__()

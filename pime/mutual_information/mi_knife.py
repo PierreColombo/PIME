@@ -8,8 +8,9 @@ class MIKnife(nn.Module):
     """
     This is a class that implements the estimator to I(X;Y) using the Kernel Estimator introduce in :cite:t:`pichler2022differential`.
     Two modes  are possible:
-    * Using two Kernels to compute I(X;Y) = H(X) - H(X|Y)
-    * Using three Kernels to compute  I(X;Y) = - H(X,Y) + H(X) + H(Y)
+
+    * Using two kernels to compute :math:`I(X;Y) = H(X) - H(X|Y)`
+    * Using three kernels to compute :math:`I(X;Y) = - H(X,Y) + H(X) + H(Y)`
 
     :param x_size: dimensions of samples from X
     :type x_size: int

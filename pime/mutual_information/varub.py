@@ -10,7 +10,7 @@ class VarUB(nn.Module):
 
     :param x_dim: dimensions of samples from X
     :type x_dim:  int
-    :param y_dim:dimensions of samples from Y
+    :param y_dim: dimensions of samples from Y
     :type y_dim: int
     :param hidden_size: the dimension of the hidden layer of the approximation network q(Y|X)
     :type hidden_size: int

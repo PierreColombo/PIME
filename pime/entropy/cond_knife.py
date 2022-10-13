@@ -7,19 +7,19 @@ from torch import Tensor
 
 class ConditionalKNIFE(nn.Module):
     """
-    This is a class that implements the estimator [20] to H(X|Y).
+    This class implements the estimator for :math:`H(X|Y)` from :cite:t:`pichler2022differential`.
 
-      :param x_dim: dimensions of samples from X
-      :type x_dim:  int
-      :param y_dim:dimensions of samples from Y
-      :type y_dim: int
-     :param hidden_size: the dimension of the hidden layer of the approximation network q(Y|X)
-      :type hidden_size: int
+    :param device: PyTorch Device
+    :type device: torch.device
+    :param number_of_samples: Number of samples used for the kernel (:math:`N` in :cite:p:`pichler2022differential`)
+    :type number_of_samples: int
+    :param x_size: dimensions of samples from X
+    :type x_size:  int
+    :param y_size: dimensions of samples from Y
+    :type y_size: int
+    :param hidden_size: the dimension of the hidden layer of the approximation network q(Y|X)
+    :type hidden_size: int
 
-    References
-    ----------
-
-    .. [20] Pichler, G., Colombo, P., Boudiaf, M., Koliander, G., & Piantanida, P. (2022). KNIFE: Kernelized-Neural Differential Entropy Estimation. ICML 2022.
     """
 
     def __init__(self, device,

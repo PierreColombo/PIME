@@ -6,18 +6,16 @@ from torch import Tensor
 
 class FisherRao(ContinuousEstimator):
     """
-    This is a class that compute the Fisher Rao Distance.
-      In the special case where X and Y follows a gaussian multivariate distribution. This has been used in [19] to build fair classifiers and learn disentangled  representations.
+    This is a class that compute the Fisher-Rao Distance
+    in the special case where X and Y follow a multivariate Gaussian distribution.
+    A geometrical interpretation of the Fisher-Rao distance if offered in :cite:t:`Costa2015Fisher`.
+    This has been used in :cite:t:`Colombo2022Learning` to build fair classifiers and
+    learn disentangled  representations.
 
       :param name: name of the estimator
       :type x_dim:  str
 
-    References
-    ----------
-
-      .. [19] Pierre Colombo, Guillaume Staerman, Nathan Noiry, and Pablo Piantanida. 2022. Learning Disentangled Textual Representations via Statistical Measures of Similarity. In Proceedings of the 60th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers), pages 2614–2630, Dublin, Ireland. Association for Computational Linguistics.
-    """
-
+   """
     def __init__(self, name):
         self.name = name
 
@@ -28,10 +26,8 @@ class FisherRao(ContinuousEstimator):
         :param Y: Input distribution
         :type Y: Tensor (B*hidden size)
         :return:  Fisher Rao distance between the reference and hypothesis distribution under
-        the Multivariate Gaussian Hypothesis
-        """
-        """
-        https://www.sciencedirect.com/science/article/pii/S0166218X14004211
+                  the Multivariate Gaussian Hypothesis
+
         """
         # TODO : handle the case of 0
 

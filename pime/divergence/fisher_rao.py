@@ -4,17 +4,13 @@ from torch import Tensor
 
 class FisherRao(DiscreteEstimator):
     """
-    This is a class that implements the AB divergences between two discrete distributions.
-      ABDivergences have been proposed in [5] and used to measure similarity between sentences among others (see [2]).
+    This is a class that implements the Fisher-Rao divergences between two discrete distributions.
+    Fisher Rao for regularization has been proposed in :cite:t:`picot2022adversarial` and used to measure
+    similarity between sentences among others (see :cite:t:`Colombo2022InfoLM`).
 
-    :param name: Name of the Fisher Roa distance usefull to save the results
+    :param name: Name of the Fisher-Rao distance useful to save the results
     :type name: str
 
-    References
-    ----------
-
-    .. [5] Picot, M., Messina, F., Boudiaf, M., Labeau, F., Ayed, I. B., & Piantanida, P. (2022). Adversarial Robustness via Fisher-Rao Regularization. IEEE Transactions on Pattern Analysis and Machine Intelligence.
-    .. [2] Colombo, P. J. A., Clavel, C., & Piantanida, P. (2022, June). Infolm: A new metric to evaluate summarization & data2text generation. In Proceedings of the AAAI Conference on Artificial Intelligence (Vol. 36, No. 10, pp. 10554-10562).
     """
     def __init__(self, name: str):
         self.name = name
@@ -23,11 +19,11 @@ class FisherRao(DiscreteEstimator):
         """
         Predict divergence scores for the distributions.
 
-        :param X: discreate input reference distribution over the discret support
+        :param X: discrete input reference distribution over the discrete support
         :type X: tensor of size (B*S) where B is the size of the batch and S the size of the support.
-        :param Y: discreate hypothesis reference distribution over the discret support
+        :param Y: discrete hypothesis reference distribution over the discrete support
         :type Y: tensor of size (B*S) where B is the size of the batch and S the size of the support.
-        :return:  Fisher Rao distance between X and Y
+        :return:  Fisher-Rao distance between X and Y
         """
         fisher_rao = torch.clamp(
             torch.sum(torch.sqrt(X) * torch.sqrt(

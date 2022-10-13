@@ -6,25 +6,39 @@ from torch import Tensor
 
 class KNIFE(nn.Module):
     """
-    This is a class that implements the estimator [20] to H(X).
+    This class implements the entropy estimater in :cite:t:`pichler2022differential`.
 
-      :param x_dim: dimensions of samples from X
-      :type x_dim:  int
-      :param y_dim:dimensions of samples from Y
-      :type y_dim: int
-      :param hidden_size: the dimension of the hidden layer of the approximation network q(Y|X)
-      :type hidden_size: int
+    :param zc_dim: ambient dimension (:math:`d` in :cite:p:`pichler2022differential`)
+    :type zc_dim: int
+    :param init_samples: optional samples for initializing the mean values :math:`b_m`
+    :type init_samples: Tensor
+    :param optimize_mu: if `False`, the `init_samples` are fixed and not optimized
+    :type optimize_mu: bool
+    :param batch_size: number of samples in `init_samples` (if given); only used if `optimize_mu` is `False`
+    :type batch_size: int
+    :param marg_modes: number of samples in `init_samples` (if given); only used if `optimize_mu` is `True`
+    :type marg_modes: int
+    :param use_tanh: if `True`, :math:`\\tanh()` is applied to the log-variance before exponentiation
+    :type use_tanh: bool
+    :param init_std: standard deviation for Gaussian initialization of parameters
+    :type init_std: float
+    :param cov_diagonal: if "var", the diagonal entries of the covariance matrices
+                         :math:`A_1, A_2, \\dots, A_M` are considered training parameters;
+                         otherwise they will not be trained.
+    :type cov_diagonal: str
+    :param cov_off_diagonal: if "var", the off-diagonal entries of the covariance matrices
+                             :math:`A_1, A_2, \\dots, A_M` are considered training parameters;
+                             otherwise they will not be trained.
+    :type cov_off_diagonal: str
+    :param average: if "var", the weights :math:`u_1, u_2, \\dots, u_M` are considered training parameters;
+                    otherwise they will not be trained.
+    :type average: str
 
-    References
-    ----------
-
-    .. [20] Pichler, G., Colombo, P., Boudiaf, M., Koliander, G., & Piantanida, P. (2022). KNIFE: Kernelized-Neural Differential Entropy Estimation. ICML 2022.
     """
 
     def __init__(self, zc_dim: int, init_samples=None, optimize_mu: bool = True,
                  batch_size: int = 1, marg_modes: int = 128, use_tanh: bool = True, init_std: float = 0.001,
                  cov_diagonal: str = 'var', cov_off_diagonal: str = 'var', average: str = 'var'):
-
         self.optimize_mu = optimize_mu
         self.K = marg_modes if optimize_mu else batch_size
         self.d = zc_dim
@@ -38,7 +52,7 @@ class KNIFE(nn.Module):
             init_samples = self.init_std * torch.randn(self.K, self.d)
         # self.means = nn.Parameter(torch.rand(self.K, self.d), requires_grad=True)
         if self.optimize_mu:
-            self.means = nn.Parameter(init_samples, requires_grad=True)  # [K, db]
+            self.means = nn.Parameter(init_samples, requires_grad=True)  # [K, d]
         else:
             self.means = nn.Parameter(init_samples, requires_grad=False)
 
