@@ -17,6 +17,8 @@ class VarUB(nn.Module):
 
     """
 
+    # TODO Where is this mentioned in alemi2017deep ? I don't find this estimator.
+
     def __init__(self, x_dim: int, y_dim: int, hidden_size: int):
         super(VarUB, self).__init__()
         self.p_mu = nn.Sequential(nn.Linear(x_dim, hidden_size // 2),

@@ -6,7 +6,7 @@ from torch import Tensor
 
 class KNIFE(nn.Module):
     """
-    This class implements the entropy estimater in :cite:t:`pichler2022differential`.
+    This class implements the entropy estimator in :cite:t:`pichler2022differential`.
 
     :param zc_dim: ambient dimension (:math:`d` in :cite:p:`pichler2022differential`)
     :type zc_dim: int
