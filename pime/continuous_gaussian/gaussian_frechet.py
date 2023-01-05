@@ -8,14 +8,20 @@ class Frechet(ContinuousEstimator):
     In the special case where X and Y follows a gaussian multivariate distribution.
     This has been used in :cite:t:`Colombo2022Learning` to build fair classifiers and learn disentangle representations.
 
-      :param name: name of the estimator
-      :type x_dim:  str
+    .. math::
+        D_{F}(X,Y) = \\left\\| \\mu_{1} - \\mu_{2} \\right\\|_{2}^{2} + \\sum_{i=1}^{d} \\left( \\sigma_{1}^{2} + \\sigma_{2}^{2} - 2 \\sqrt{\\sigma_{1}^{2} \\sigma_{2}^{2}} \\right)
+
+
+    with :math:`\\sigma_{X}^{2} = \\text{diag}(\\Sigma_{X}) = \\text{diag}(\\text{Covariance}(X))`
+
+    :param name: name of the estimator
+    :type x_dim:  str
 
     """
-    def __init__(self, name:str):
+    def __init__(self, name: str):
         self.name = name
 
-    def forward(self, X:Tensor, Y:Tensor)->Tensor:
+    def forward(self, X:Tensor, Y:Tensor) -> Tensor:
         """
         :param X: Input distribution
         :type X: Tensor (B*hidden size)

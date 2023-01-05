@@ -12,10 +12,21 @@ class FisherRao(ContinuousEstimator):
     This has been used in :cite:t:`Colombo2022Learning` to build fair classifiers and
     learn disentangled  representations.
 
-      :param name: name of the estimator
-      :type x_dim:  str
+    .. math ::
 
-   """
+        m_1 = \\left( \\frac{\\left( \\mu_1 - \\mu_2 \\right)^2}{2} + \\left( \\sigma_{2} + \\sigma_{1} \\right)^2 \\right)^{1/2}
+
+        m_2 = \\left( \\frac{\\left( \\mu_1 - \\mu_2 \\right)^2}{2} + \\left( \\sigma_{2} - \\sigma_{1} \\right)^2 \\right)^{1/2}
+
+        D_{FR}(P||Q) = \\sqrt{2} \\left\\|\\left\\| \\log{\\left( \\frac{m_1 + m_2}{m_1 - m_2} \\right)}^2 \\right\\|\\right\\|_2
+
+    with :math:`\\sigma_{X}^{2} = \\text{diag}(\\Sigma_{X}) = \\text{diag}(\\text{Covariance}(X))`
+
+    :param name: name of the estimator
+    :type x_dim:  str
+
+    """
+
     def __init__(self, name):
         self.name = name
 
@@ -36,7 +47,7 @@ class FisherRao(ContinuousEstimator):
         self.hypo_mean = compute_mean(Y)
         self.hypo_cov = compute_cov(Y)
 
-        first = (((self.ref_mean - self.hypo_mean) ** 2) / 2 + (
+        first = (((self.ref_mean - self.hypo_mean) ** 2) / 2    + (
                 torch.sqrt(torch.diag(self.hypo_cov)) + torch.sqrt(torch.diag(self.ref_cov))) ** 2) ** (1 / 2)
         second = (((self.ref_mean - self.hypo_mean) ** 2) / 2 + (
                 torch.sqrt(torch.diag(self.hypo_cov)) - torch.sqrt(torch.diag(self.ref_cov))) ** 2) ** (1 / 2)

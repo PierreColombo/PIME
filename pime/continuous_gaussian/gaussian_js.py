@@ -10,8 +10,20 @@ class JensenShannon(ContinuousEstimator):
     In the special case where X and Y follows a gaussian multivariate distribution.
     This has been used in :cite:t:`Colombo2022Learning` to build fair classifiers and learn disentangle representations.
 
-      :param name: name of the estimator
-      :type x_dim:  str
+    The Continuous KL divergence is defined as:
+
+    .. math::
+        D_{KL}(X, Y) = \\frac{1}{2}\\left[\\log\\frac{|\\Sigma_2|}{|\\Sigma_1|} - d + \\text{tr} \\{ \\Sigma_2^{-1}\\Sigma_1 \\} + (\\mu_2 - \\mu_1)^T \\Sigma_2^{-1}(\\mu_2 - \\mu_1)\\right]
+
+    leading to it's symmetric version:
+
+    .. math::
+        D_{JS}(X,Y) = \\frac{D_{KL}(X, Y) + D_{KL}(Y, X)}{2}
+
+    Note that other definitions of Jensen-Shannon divergence exist, where :math:`D_{JS}(X,Y) = \\frac{D_{KL}(X, \\frac{X+Y}{2}) + D_{KL}(Y, \\frac{X+Y}{2})}{2}`
+
+    :param name: name of the estimator
+    :type x_dim:  str
 
     """
 
@@ -29,7 +41,7 @@ class JensenShannon(ContinuousEstimator):
         """
 
         """
-        1/2[log|Σ2|/|Σ1|−𝑑+tr{Σ**0.5Σ1}+(𝜇2−𝜇1)𝑇Σ−12(𝜇2−𝜇1)]
+        1/2[log|Σ2|/|Σ1|    −𝑑+tr{Σ**0.5Σ1}+(𝜇2−𝜇1)𝑇Σ−12(𝜇2−𝜇1)]
         https://stats.stackexchange.com/questions/60680/kl-divergence-between-two-multivariate-gaussians
         """
         self.ref_mean = compute_mean(X)

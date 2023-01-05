@@ -9,6 +9,8 @@ class ABDivergence(DiscreteEstimator):
     ABDivergences have been proposed in :cite:t:`cichocki2011generalized` and used to measure
     similarity between sentences among others (see :cite:t:`Colombo2022InfoLM`).
 
+    .. math::
+        D_{\\alpha,\\beta}(P||Q) = \\frac{1}{\\alpha \\beta} \\left( \\sum_{i=1}^S \\frac{\\alpha}{\\alpha + \\beta} P_i^{\\alpha + \\beta} + \\sum_{i=1}^S \\frac{\\beta}{\\alpha + \\beta} Q_i^{\\alpha + \\beta} - \\sum_{i=1}^S P_i^{\\alpha} Q_i^{\\beta} \\right)
     
     :param name: Name of the divergence useful to save the results
     :type name: str
@@ -16,9 +18,6 @@ class ABDivergence(DiscreteEstimator):
     :type alpha: float
     :param beta: Coefficient :math:`\\beta` of the AB divergence
     :type beta: float
-
-    .. math::
-        D_{\\alpha,\\beta}(P||Q) = \\frac{1}{\\alpha \\beta} \\left( \\sum_{i=1}^S \\frac{\\alpha}{\\alpha + \\beta} P_i^{\\alpha + \\beta} + \\sum_{i=1}^S \\frac{\\beta}{\\alpha + \\beta} Q_i^{\\alpha + \\beta} - \\sum_{i=1}^S P_i^{\\alpha} Q_i^{\\beta} \\right)
     """
 
     def __init__(self, name: str, alpha: float, beta: float):
