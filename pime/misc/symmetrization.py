@@ -1,5 +1,6 @@
-from pime.abstract_class.discrete_estimator import DiscreteEstimator
 from torch import Tensor
+
+from pime.abstract_class.discrete_estimator import DiscreteEstimator
 
 
 class JeffreySymmetrizationEstimator(DiscreteEstimator):

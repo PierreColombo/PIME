@@ -1,6 +1,8 @@
-from pime.abstract_class.discrete_estimator import DiscreteEstimator
 import torch
 from torch import Tensor
+
+from pime.abstract_class.discrete_estimator import DiscreteEstimator
+
 
 class AlphaDivergence(DiscreteEstimator):
     """
@@ -12,6 +14,11 @@ class AlphaDivergence(DiscreteEstimator):
     :type name: str
     :param alpha: Coefficient :math:`\\alpha` of the Alpha divergence
     :type alpha: float
+
+    .. math::
+        D_{\\alpha}(P||Q) = \\frac{1}{\\alpha (1-\\alpha)}  \\left( 1 - \\sum_{i=1}^S P_i^{\\alpha} Q_i^{1-\\alpha} \\right)
+
+
     """
 
     def __init__(self, name: str, alpha: float):
@@ -31,5 +38,4 @@ class AlphaDivergence(DiscreteEstimator):
         """
         alpha = self.alpha
 
-        return 1 / (alpha * (1 - alpha)) - torch.sum(X ** alpha * Y ** (1 - alpha), dim=-1) / (
-                alpha * (1 - alpha))
+        return 1 / (alpha * (1 - alpha)) - torch.sum(X**alpha * Y ** (1 - alpha), dim=-1) / (alpha * (1 - alpha))

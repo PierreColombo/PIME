@@ -1,6 +1,7 @@
-from pime.abstract_class.discrete_estimator import DiscreteEstimator
 import numpy as np
 from torch import Tensor
+
+from pime.abstract_class.discrete_estimator import DiscreteEstimator
 
 
 class IProjector(DiscreteEstimator):
@@ -20,6 +21,7 @@ class IProjector(DiscreteEstimator):
        .. [11] Picot, M, Piantanida, P. & Colombo, P (2022, July). An I-Projection-based Adversarial Attack Detector
 
     """
+
     # TODO: Where was [11] this published?
 
     def __init__(self, name: str, discrete_estimator: DiscreteEstimator, **kwargs):

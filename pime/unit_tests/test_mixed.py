@@ -1,7 +1,9 @@
 # TODO à faire pour malik
-import torch
+"""
 import math
+
 import numpy as np
+import torch
 
 
 def unit_tests():
@@ -11,7 +13,7 @@ def unit_tests():
     n_classes = 10
     n_tries = 10
     classifier = LogisticRegression()
-    entropy_estimator = AlphaEntropy(name='voldemort', alpha=2.0)
+    entropy_estimator = AlphaEntropy(name="voldemort", alpha=2.0)
 
     for i in range(n_tries):
 
@@ -26,7 +28,6 @@ def unit_tests():
 
         # 2) Make sure that the mi is 0 in a trivial case
         class TrivialClassifier:
-
             def __init__(self, num_classes: int):
                 self.num_classes = num_classes
 
@@ -38,4 +39,7 @@ def unit_tests():
 
         mi_estimator = LinearEstimator(TrivialClassifier(n_classes), entropy_estimator)
         predicted_mi = mi_estimator.predict(x, y)
-        assert math.isclose(predicted_mi.item(), 0., abs_tol=1e-10), predicted_mi.item()
+        assert math.isclose(
+            predicted_mi.item(), 0.0, abs_tol=1e-10
+        ), predicted_mi.item()
+"""

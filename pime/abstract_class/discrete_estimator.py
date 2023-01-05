@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+
 from torch import Tensor
 
 
@@ -11,7 +12,7 @@ class DiscreteEstimator(ABC):
     :type name: str
     """
 
-    def __init__(self, name:str):
+    def __init__(self, name: str):
         self.name = name
 
     @abstractmethod

@@ -1,13 +1,15 @@
-from scipy import stats
+# flake8: noqa
+import math
 from functools import partial
 from typing import Callable
-import torch
+
 import numpy as np
+import torch
 from numpy.random import uniform
-import math
-from torch.distributions.uniform import Uniform
+from scipy import stats
 from torch.distributions.categorical import Categorical
 from torch.distributions.multivariate_normal import MultivariateNormal
+from torch.distributions.uniform import Uniform
 
 
 class DataGeneratorBase:
@@ -21,13 +23,13 @@ class DataGeneratorBase:
         raise NotImplementedError()
 
     def get_Lipschitz(self, L_base):
-        raise NotImplementedError('Lipschitz constant of base_distribution not known')
+        raise NotImplementedError("Lipschitz constant of base_distribution not known")
 
     def get_p_max(self, p_max_base):
-        raise NotImplementedError('P_max of base_distribution not known')
+        raise NotImplementedError("P_max of base_distribution not known")
 
     def plot(self):
-        raise NotImplementedError('Plot of base_distribution not known')
+        raise NotImplementedError("Plot of base_distribution not known")
 
     def pdf(self, x):
         xs, ys = self.plot()
@@ -73,12 +75,14 @@ class DataGeneratorMulti(DataGeneratorBase):
 
 
 class DataGeneratorPiecewise(DataGeneratorBase):
-    def __init__(self,
-                 base_distribution: Callable,
-                 weights: np.ndarray,
-                 starts: np.ndarray,
-                 scales: np.ndarray,
-                 interval=(0.0, 1.0)):
+    def __init__(
+        self,
+        base_distribution: Callable,
+        weights: np.ndarray,
+        starts: np.ndarray,
+        scales: np.ndarray,
+        interval=(0.0, 1.0),
+    ):
         super(DataGeneratorPiecewise, self).__init__()
 
         self.base_distribution = base_distribution
@@ -95,8 +99,7 @@ class DataGeneratorPiecewise(DataGeneratorBase):
         self.weights = weights
         self.scales = scales
 
-        self.selection_dist = stats.rv_discrete(b=n_mixture,
-                                                values=(range(n_mixture), self.weights))
+        self.selection_dist = stats.rv_discrete(b=n_mixture, values=(range(n_mixture), self.weights))
         self._check_no_overlap()
 
     def rvs(self, size=(1,)):
@@ -123,7 +126,7 @@ class DataGeneratorPiecewise(DataGeneratorBase):
 
 class TriangleGenerator(DataGeneratorPiecewise):
     def __init__(self, *args, **kwargs):
-        base_distribution = partial(stats.triang, c=.5)
+        base_distribution = partial(stats.triang, c=0.5)
         super(TriangleGenerator, self).__init__(*args, base_distribution=base_distribution, **kwargs)
 
     def plot(self):
@@ -191,8 +194,7 @@ class AffineGenerator(DataGeneratorBase):
         self.dbi = self.db / self.p
 
         n_mixture = self.p.shape[0]
-        self.selection_dist = stats.rv_discrete(b=n_mixture,
-                                                values=(range(n_mixture), self.p))
+        self.selection_dist = stats.rv_discrete(b=n_mixture, values=(range(n_mixture), self.p))
 
     def rvs(self, size=(1,)):
         selection = self.selection_dist.rvs(size=size)
@@ -207,9 +209,9 @@ class AffineGenerator(DataGeneratorBase):
 
         y = np.random.uniform(size=size)
         # y = np.zeros(size)
-        with np.errstate(divide='ignore', invalid='ignore'):
-            x0 = - da * b0 / db + np.sqrt((da * b0 / db) ** 2 + (2.0 * da / db) * y)
-            x1 = - da * b0 / db - np.sqrt((da * b0 / db) ** 2 + (2.0 * da / db) * y)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            x0 = -da * b0 / db + np.sqrt((da * b0 / db) ** 2 + (2.0 * da / db) * y)
+            x1 = -da * b0 / db - np.sqrt((da * b0 / db) ** 2 + (2.0 * da / db) * y)
         x0[u] = da[u] * y[u]
         x1[u] = x0[u]
 
@@ -230,9 +232,9 @@ class AffineGenerator(DataGeneratorBase):
         if self._entropy is None:
             b0 = self.b0
             b1 = self.b1
-            with np.errstate(divide='ignore', invalid='ignore'):
-                di0 = b0 ** 2 * np.log(b0)
-                di1 = b1 ** 2 * np.log(b1)
+            with np.errstate(divide="ignore", invalid="ignore"):
+                di0 = b0**2 * np.log(b0)
+                di1 = b1**2 * np.log(b1)
                 di0[np.abs(b0) < self.EPSILON] = 0.0
                 di1[np.abs(b1) < self.EPSILON] = 0.0
                 self._entropy = np.nansum(self.p - self.da * (di1 - di0) / self.db) / 2.0
@@ -244,7 +246,7 @@ class AffineGenerator(DataGeneratorBase):
 
 
 def get_random_data_generator(base_pdf: str, number=3):
-    if base_pdf == 'triangle':
+    if base_pdf == "triangle":
         base_generator = TriangleGenerator
         weights = uniform(size=(number - 1,))
         weights.sort()
@@ -255,10 +257,8 @@ def get_random_data_generator(base_pdf: str, number=3):
             scales[i] = 0.1 + 0.9 * np.random.uniform()
             starts[i] = i
 
-        return base_generator(weights=weights,
-                              starts=starts,
-                              scales=scales)
-    elif base_pdf == 'affine':
+        return base_generator(weights=weights, starts=starts, scales=scales)
+    elif base_pdf == "affine":
         base_generator = AffineGenerator
         a = np.ndarray((number + 1,))
         b = np.ndarray((number + 1,))
@@ -309,14 +309,28 @@ class UniformsXZN(XZN):
         self.pdf = torch.rand
 
     def I(self, rho):
-        HN = torch.log(2 * torch.sqrt(3 - 3 * rho ** 2))
+        HN = torch.log(2 * torch.sqrt(3 - 3 * rho**2))
         HY = self.hY(rho)
         return HY - self.dim * HN
 
     def ItoRho(self, I: float) -> float:
-        rho = 2 * I * np.sqrt((4 * I ** 2 + (-4 * I - np.log(16) - np.log(9)) * np.log(
-            12) + 8 * I * np.log(2) + np.log(3) * (4 * I + np.log(16)) + 1 + np.log(
-            3) ** 2 + 4 * np.log(2) ** 2 + np.log(12) ** 2) ** (-1))
+        rho = (
+            2
+            * I
+            * np.sqrt(
+                (
+                    4 * I**2
+                    + (-4 * I - np.log(16) - np.log(9)) * np.log(12)
+                    + 8 * I * np.log(2)
+                    + np.log(3) * (4 * I + np.log(16))
+                    + 1
+                    + np.log(3) ** 2
+                    + 4 * np.log(2) ** 2
+                    + np.log(12) ** 2
+                )
+                ** (-1)
+            )
+        )
         return rho
 
     def draw_samples(self, num_samples):
@@ -327,8 +341,8 @@ class UniformsXZN(XZN):
         return X, X, ep
 
     def logi(self, rho, x, y):
-        delta_N = torch.sqrt((1 - rho ** 2) * 3)
-        delta_X = torch.sqrt(rho ** 2 * 3)
+        delta_N = torch.sqrt((1 - rho**2) * 3)
+        delta_X = torch.sqrt(rho**2 * 3)
         d_1 = delta_N + delta_X
         d_2 = torch.abs(delta_N - delta_X)
         A = 1 / (d_1 + d_2)
@@ -338,34 +352,33 @@ class UniformsXZN(XZN):
         y_abs = y.abs()
         log_py = torch.log(A - k * torch.relu(y_abs - d_2))
 
-        lgi = - np.log(2) - torch.log(delta_N) - log_py
+        lgi = -np.log(2) - torch.log(delta_N) - log_py
         lgi = lgi.sum(dim=-1)
         return lgi
 
     def hY(self, rho):
-        rho = torch.maximum(rho, torch.sqrt(1 - rho ** 2))
-        HY = (1 / (2 * rho)) * (math.sqrt(1 - rho ** 2) + np.log(3) * (-rho) + np.log(6) * 2 * rho +
-                                torch.log(rho) * 2 * rho)
+        rho = torch.maximum(rho, torch.sqrt(1 - rho**2))
+        HY = (1 / (2 * rho)) * (math.sqrt(1 - rho**2) + np.log(3) * (-rho) + np.log(6) * 2 * rho + torch.log(rho) * 2 * rho)
         return self.dim * HY
 
     def dI(self, rho):
-        if rho > torch.sqrt(1 - rho ** 2):
-            dI = (-rho + (1 / 2) * torch.sqrt(1 - rho ** 2)) / (rho ** 2 * (rho ** 2 - 1))
+        if rho > torch.sqrt(1 - rho**2):
+            dI = (-rho + (1 / 2) * torch.sqrt(1 - rho**2)) / (rho**2 * (rho**2 - 1))
         else:
-            dI = (1 / 2) * torch.sqrt(1 - rho ** 2) / (rho ** 4 - 2 * rho ** 2 + 1)
+            dI = (1 / 2) * torch.sqrt(1 - rho**2) / (rho**4 - 2 * rho**2 + 1)
         return self.dim * dI
 
 
 class MultiTriangleXZN(XZN):
     def __init__(self, *args, **kwargs):
         super(MultiTriangleXZN, self).__init__(*args, **kwargs)
-        self.pdf = Uniform(0.0, .5)
+        self.pdf = Uniform(0.0, 0.5)
         self.components = 2
         self.categorical = Categorical(torch.ones((self.components,)) / self.components)
 
     def hY(self, rho):
         assert rho >= 1 / np.sqrt(2)
-        h = np.log(self.components) + (1 / 2 + torch.log((1 - rho ** 2) / 4) / 2)
+        h = np.log(self.components) + (1 / 2 + torch.log((1 - rho**2) / 4) / 2)
         return self.dim * h
 
     def dI(self, rho):
@@ -379,18 +392,19 @@ class MultiTriangleXZN(XZN):
 
     def draw_samples(self, num_samples):
         Z = self.categorical.sample((num_samples, self.dim)).to(device=self.device)
-        ep0 = self.pdf.sample((num_samples, self.dim)).to(device=self.device) + self.pdf.sample(
-            (num_samples, self.dim)).to(device=self.device)
-        ep = self.pdf.sample((num_samples, self.dim)).to(device=self.device) + self.pdf.sample(
-            (num_samples, self.dim)).to(device=self.device)
+        ep0 = self.pdf.sample((num_samples, self.dim)).to(device=self.device) + self.pdf.sample((num_samples, self.dim)).to(
+            device=self.device
+        )
+        ep = self.pdf.sample((num_samples, self.dim)).to(device=self.device) + self.pdf.sample((num_samples, self.dim)).to(
+            device=self.device
+        )
         return Z + ep0, Z, ep
 
 
 class GaussianXZN(XZN):
     def __init__(self, *args, **kwargs):
         super(GaussianXZN, self).__init__(*args, **kwargs)
-        self.pdf = MultivariateNormal(torch.zeros(self.dim).to(self.device),
-                                      torch.eye(self.dim).to(self.device))
+        self.pdf = MultivariateNormal(torch.zeros(self.dim).to(self.device), torch.eye(self.dim).to(self.device))
 
     def ItoRho(self, I):
         rho = np.sqrt(1 - np.exp(-2 * I))
@@ -401,16 +415,16 @@ class GaussianXZN(XZN):
         return self.dim / 2 * (np.log(2 * np.pi) + 1)
 
     def I(self, rho):
-        num_nats = - self.dim / 2 * torch.log(1 - rho ** 2)
+        num_nats = -self.dim / 2 * torch.log(1 - rho**2)
         return num_nats
 
     def dI(self, rho):
-        num_nats = rho * self.dim / (1 - rho ** 2)
+        num_nats = rho * self.dim / (1 - rho**2)
         return num_nats
 
     def logi(self, rho, x, y):
-        C = -self.dim / 2 * torch.log(1 - rho ** 2)
-        li = -1 / (2 * (1 - rho ** 2)) * (rho ** 2 * (x ** 2 + y ** 2) - 2 * rho * x * y)
+        C = -self.dim / 2 * torch.log(1 - rho**2)
+        li = -1 / (2 * (1 - rho**2)) * (rho**2 * (x**2 + y**2) - 2 * rho * x * y)
         return C + torch.sum(li, dim=-1)
 
     def draw_samples(self, num_samples):
@@ -434,12 +448,12 @@ class XY(object):
         return self.xyn.dI(self.rho)
 
     def _get_samples(self):
-        return self.x, self.z * self.rho + torch.sqrt(1 - self.rho ** 2) * self.n
+        return self.x, self.z * self.rho + torch.sqrt(1 - self.rho**2) * self.n
 
     def repeat_samples(self):
         x, y = self._get_samples()
         if self.cubed:
-            x = x ** 3
+            x = x**3
         return x, y
         # return y, x
 

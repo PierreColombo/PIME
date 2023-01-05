@@ -1,13 +1,8 @@
 # PIME: Python Information Measures Estimation
 
-Pour la doc: https://pythonot.github.io/
+Documentation (not necessarily up to date with master branch): https://pime.readthedocs.io/en/latest/
 
-
-Pour la doc: https://docs.readthedocs.io/en/stable/tutorial/
-
-`
-
-Pour la To-do list: https://www.notion.so/305cd6b61831453db1e0f6b52b113d81?v=9dfa802a5b4f4e5f97e789f1ef6d0356
+To-do list: https://www.notion.so/305cd6b61831453db1e0f6b52b113d81?v=9dfa802a5b4f4e5f97e789f1ef6d0356
 `
 
 Pour Moi il y a deux parties: pour les measures de similarité
@@ -30,3 +25,16 @@ Continue Continue:
     -  Les closes formes gaussiennes
   - Sur une seule measure:
     - Entropy  
+
+
+###  Running tests locally
+
+```bash
+pip install pytest pytest-cov black isort
+
+# Make sure pip install -e . has been run
+isort pime
+black pime
+
+py.test --cov-report term --cov=pime ./unit_tests     
+```

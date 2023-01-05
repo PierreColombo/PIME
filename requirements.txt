@@ -1,0 +1,7 @@
+# Build PIME package
+-e .
+
+# Minimal packages for PIME estimators
+torch
+numpy
+tqdm

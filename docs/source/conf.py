@@ -38,6 +38,7 @@ extensions = [
     'sphinx.ext.doctest',
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
+    'sphinx_autodoc_typehints',
     'sphinx.ext.intersphinx',
     'sphinxcontrib.bibtex',
     'sphinx.ext.napoleon',

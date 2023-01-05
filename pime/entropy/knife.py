@@ -1,6 +1,6 @@
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
 from torch import Tensor
 
 
@@ -36,9 +36,19 @@ class KNIFE(nn.Module):
 
     """
 
-    def __init__(self, zc_dim: int, init_samples=None, optimize_mu: bool = True,
-                 batch_size: int = 1, marg_modes: int = 128, use_tanh: bool = True, init_std: float = 0.001,
-                 cov_diagonal: str = 'var', cov_off_diagonal: str = 'var', average: str = 'var'):
+    def __init__(
+        self,
+        zc_dim: int,
+        init_samples=None,
+        optimize_mu: bool = True,
+        batch_size: int = 1,
+        marg_modes: int = 128,
+        use_tanh: bool = True,
+        init_std: float = 0.001,
+        cov_diagonal: str = "var",
+        cov_off_diagonal: str = "var",
+        average: str = "var",
+    ):
         self.optimize_mu = optimize_mu
         self.K = marg_modes if optimize_mu else batch_size
         self.d = zc_dim
@@ -56,13 +66,13 @@ class KNIFE(nn.Module):
         else:
             self.means = nn.Parameter(init_samples, requires_grad=False)
 
-        if cov_diagonal == 'var':
+        if cov_diagonal == "var":
             diag = self.init_std * torch.randn((1, self.K, self.d))
         else:
             diag = self.init_std * torch.randn((1, 1, self.d))
         self.logvar = nn.Parameter(diag, requires_grad=True)
 
-        if cov_off_diagonal == 'var':
+        if cov_off_diagonal == "var":
             tri = self.init_std * torch.randn((1, self.K, self.d, self.d))
             tri = tri.to(init_samples.dtype)
             self.tri = nn.Parameter(tri, requires_grad=True)
@@ -70,13 +80,13 @@ class KNIFE(nn.Module):
             self.tri = None
 
         weigh = torch.ones((1, self.K))
-        if average == 'var':
+        if average == "var":
             self.weigh = nn.Parameter(weigh, requires_grad=True)
         else:
             self.weigh = nn.Parameter(weigh, requires_grad=False)
 
     def logpdf(self, X: Tensor) -> Tensor:
-        assert len(X.shape) == 2 and X.shape[1] == self.d, 'x has to have shape [N, d]'
+        assert len(X.shape) == 2 and X.shape[1] == self.d, "x has to have shape [N, d]"
         X = X[:, None, :]
         w = torch.log_softmax(self.weigh, dim=1)
         y = X - self.means
@@ -88,7 +98,7 @@ class KNIFE(nn.Module):
         # print(f"Marg : {var.min()} | {var.max()} | {var.mean()}")
         if self.tri is not None:
             y = y + torch.squeeze(torch.matmul(torch.tril(self.tri, diagonal=-1), y[:, :, :, None]), 3)
-        y = torch.sum(y ** 2, dim=2)
+        y = torch.sum(y**2, dim=2)
 
         y = -y / 2 + torch.sum(torch.log(torch.abs(var) + 1e-8), dim=-1) + w
         y = torch.logsumexp(y, dim=-1)

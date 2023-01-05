@@ -1,5 +1,6 @@
 sphinxcontrib-bibtex
 sphinx_rtd_theme
+sphinx_autodoc_typehints
 matplotlib==3.5.2
 numpy
 pandas
