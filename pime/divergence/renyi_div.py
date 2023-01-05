@@ -10,9 +10,12 @@ class RenyiDivergence(DiscreteEstimator):
     A thorough study was published by :cite:t:`VanErven2014Renyi`.
     It is used to measure similarity between sentences among others (see :cite:t:`Colombo2022InfoLM`).
 
+    .. math::
+        D_{\\alpha}(P||Q) = \\frac{1}{\\alpha - 1} \\log \\sum_{i=1}^S P_i^{\\alpha} Q_i^{1 - \\alpha}
+
     :param name: Name of the divergence useful to save the results
     :type name: str
-    :param alpha: Coefficient $\alpha$ of the Renyi Divergence
+    :param alpha: Coefficient :math:`\\alpha` of the Renyi Divergence
     :type alpha: float
     """
 

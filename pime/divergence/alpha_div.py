@@ -12,6 +12,11 @@ class AlphaDivergence(DiscreteEstimator):
     :type name: str
     :param alpha: Coefficient :math:`\\alpha` of the Alpha divergence
     :type alpha: float
+
+    .. math::
+        D_{\\alpha}(P||Q) = \\frac{1}{\\alpha (1-\\alpha)}  \\left( 1 - \\sum_{i=1}^S P_i^{\\alpha} Q_i^{1-\\alpha} \\right)
+
+    
     """
 
     def __init__(self, name: str, alpha: float):
