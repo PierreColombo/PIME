@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+
 from torch import Tensor
 
 
@@ -15,7 +16,7 @@ class ContinuousEstimator(ABC):
         self.name = name
 
     @abstractmethod
-    def predict(self, X: Tensor, Y: Tensor) -> Tensor:
+    def forward(self, X: Tensor, Y: Tensor) -> Tensor:
         """
         This method should take the two Tensors `X` and `Y` as input and produce as similarity
         score, which is returned.

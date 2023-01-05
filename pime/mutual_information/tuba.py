@@ -1,7 +1,7 @@
+import numpy as np
 import torch
 import torch.nn as nn
 from torch import Tensor
-import numpy as np
 
 
 class TUBA(nn.Module):
@@ -19,9 +19,7 @@ class TUBA(nn.Module):
 
     def __init__(self, x_dim: int, y_dim: int, hidden_size: int):
         super(TUBA, self).__init__()
-        self.F_func = nn.Sequential(nn.Linear(x_dim + y_dim, hidden_size),
-                                    nn.ReLU(),
-                                    nn.Linear(hidden_size, 1))
+        self.F_func = nn.Sequential(nn.Linear(x_dim + y_dim, hidden_size), nn.ReLU(), nn.Linear(hidden_size, 1))
         self.baseline = nn.Linear(y_dim, 1)
 
     def forward(self, x_samples: Tensor, y_samples: Tensor) -> Tensor:
@@ -35,8 +33,9 @@ class TUBA(nn.Module):
         T0 = self.F_func(torch.cat([x_samples, y_samples], dim=-1))
         T1 = self.F_func(torch.cat([x_tile, y_tile], dim=-1))  # shape [sample_size, sample_size, 1]
 
-        lower_bound = 1 + T0.mean() - log_scores.mean() - (
-                (T1 - log_scores).logsumexp(dim=1) - np.log(sample_size)).exp().mean()
+        lower_bound = (
+            1 + T0.mean() - log_scores.mean() - ((T1 - log_scores).logsumexp(dim=1) - np.log(sample_size)).exp().mean()
+        )
         return lower_bound
 
     def learning_loss(self, x_samples: Tensor, y_samples: Tensor) -> Tensor:

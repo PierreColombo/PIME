@@ -1,6 +1,7 @@
-from pime.abstract_class.discrete_estimator import DiscreteEstimator
 import torch
 from torch import Tensor
+
+from pime.abstract_class.discrete_estimator import DiscreteEstimator
 
 
 class LP(DiscreteEstimator):

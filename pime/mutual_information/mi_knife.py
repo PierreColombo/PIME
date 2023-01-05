@@ -1,12 +1,14 @@
-import torch.nn as nn
 import torch
-from pime.entropy.knife import KNIFE
+import torch.nn as nn
+
 from pime.entropy.cond_knife import ConditionalKNIFE
+from pime.entropy.knife import KNIFE
 
 
 class MIKnife(nn.Module):
     """
-    This is a class that implements the estimator to I(X;Y) using the Kernel Estimator introduce in :cite:t:`pichler2022differential`.
+    This is a class that implements the estimator to I(X;Y) using the Kernel Estimator introduced
+    in :cite:t:`pichler2022differential`.
     Two modes  are possible:
 
     * Using two kernels to compute :math:`I(X;Y) = H(X) - H(X|Y)`
@@ -21,14 +23,19 @@ class MIKnife(nn.Module):
 
     """
 
-    def __init__(self, x_size: int, y_size, number_of_samples=128,
-                 device=torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
-                 batch_size=128,
-                 # [K, d] to initialize the kernel :) so K is the number of points :)
-                 average='fixed',  # un
-                 cov_diagonal='var',  # diagonal of the covariance
-                 cov_off_diagonal='var',  # var
-                 use_joint=True):
+    def __init__(
+        self,
+        x_size: int,
+        y_size: int,
+        number_of_samples: int = 128,
+        device: str = torch.device("cuda" if torch.cuda.is_available() else "cpu"),
+        batch_size: int = 128,
+        # [K, d] to initialize the kernel :) so K is the number of points :)
+        average="fixed",  # un
+        cov_diagonal="var",  # diagonal of the covariance
+        cov_off_diagonal="var",  # var
+        use_joint=True,
+    ):
         super(MIKnife, self).__init__()
         self.use_joint = use_joint
         self.count = 0
@@ -36,11 +43,18 @@ class MIKnife(nn.Module):
         self.kernel_1 = KNIFE(marg_modes=number_of_samples, zc_dim=x_size, batch_size=batch_size)
         if self.use_joint:
             self.kernel_2 = KNIFE(marg_modes=number_of_samples, zc_dim=y_size, batch_size=batch_size)
-            self.kernel_joint = KNIFE(marg_modes=number_of_samples, zc_dim=x_size + y_size,
-                                      batch_size=batch_size)
+            self.kernel_joint = KNIFE(
+                marg_modes=number_of_samples,
+                zc_dim=x_size + y_size,
+                batch_size=batch_size,
+            )
         else:
-            self.kernel_conditional = ConditionalKNIFE(device=device, number_of_samples=number_of_samples,
-                                                       x_size=x_size, y_size=y_size)
+            self.kernel_conditional = ConditionalKNIFE(
+                device=device,
+                number_of_samples=number_of_samples,
+                x_size=x_size,
+                y_size=y_size,
+            )
 
     def forward(self, x_samples, y_samples):  # samples have shape [sample_size, dim]
         hz_1 = self.kernel_1(x_samples)

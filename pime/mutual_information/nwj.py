@@ -1,7 +1,7 @@
+import numpy as np
 import torch
 import torch.nn as nn
 from torch import Tensor
-import numpy as np
 
 
 class NWJ(nn.Module):
@@ -19,9 +19,7 @@ class NWJ(nn.Module):
 
     def __init__(self, x_dim: int, y_dim: int, hidden_size: int):
         super(NWJ, self).__init__()
-        self.F_func = nn.Sequential(nn.Linear(x_dim + y_dim, hidden_size),
-                                    nn.ReLU(),
-                                    nn.Linear(hidden_size, 1))
+        self.F_func = nn.Sequential(nn.Linear(x_dim + y_dim, hidden_size), nn.ReLU(), nn.Linear(hidden_size, 1))
 
     def forward(self, x_samples: Tensor, y_samples: Tensor) -> Tensor:
         # shuffle and concatenate
@@ -31,7 +29,7 @@ class NWJ(nn.Module):
         y_tile = y_samples.unsqueeze(1).repeat((1, sample_size, 1))
 
         T0 = self.F_func(torch.cat([x_samples, y_samples], dim=-1))
-        T1 = self.F_func(torch.cat([x_tile, y_tile], dim=-1)) - 1.  # shape [sample_size, sample_size, 1]
+        T1 = self.F_func(torch.cat([x_tile, y_tile], dim=-1)) - 1.0  # shape [sample_size, sample_size, 1]
 
         lower_bound = T0.mean() - (T1.logsumexp(dim=1) - np.log(sample_size)).exp().mean()
         return lower_bound

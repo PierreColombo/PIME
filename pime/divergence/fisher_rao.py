@@ -1,6 +1,8 @@
-from pime.abstract_class.discrete_estimator import DiscreteEstimator
 import torch
 from torch import Tensor
+
+from pime.abstract_class.discrete_estimator import DiscreteEstimator
+
 
 class FisherRao(DiscreteEstimator):
     """
@@ -15,6 +17,7 @@ class FisherRao(DiscreteEstimator):
     :type name: str
 
     """
+
     def __init__(self, name: str):
         self.name = name
 
@@ -28,9 +31,5 @@ class FisherRao(DiscreteEstimator):
         :type Y: tensor of size (B*S) where B is the size of the batch and S the size of the support.
         :return:  Fisher-Rao distance between X and Y
         """
-        fisher_rao = torch.clamp(
-            torch.sum(torch.sqrt(X) * torch.sqrt(
-                Y),
-                      dim=-1), 0, 1)
+        fisher_rao = torch.clamp(torch.sum(torch.sqrt(X) * torch.sqrt(Y), dim=-1), 0, 1)
         return 2 * torch.acos(fisher_rao)
-

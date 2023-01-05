@@ -1,27 +1,26 @@
+import torch
 import torch.nn as nn
+
 from ..entropy.entropy_doe import EntropyDoe
 from ..misc.utils import compute_negative_ln_prob
 
-import torch
-
 
 class FF_DOE(nn.Module):
-
     def __init__(self, dim_input, dim_output, dropout_rate=0):
         super(FF_DOE, self).__init__()
         self.residual_connection = False
         self.num_layers = 1
         self.layer_norm = True
-        self.activation = 'tanh'
+        self.activation = "tanh"
         self.stack = nn.ModuleList()
-        for l in range(self.num_layers):
+        for _ in range(self.num_layers):
             layer = []
 
             if self.layer_norm:
                 layer.append(nn.LayerNorm(dim_input))
 
             layer.append(nn.Linear(dim_input, dim_output))
-            layer.append({'tanh': nn.Tanh(), 'relu': nn.ReLU()}[self.activation])
+            layer.append({"tanh": nn.Tanh(), "relu": nn.ReLU()}[self.activation])
             layer.append(nn.Dropout(dropout_rate))
 
             self.stack.append(nn.Sequential(*layer))
@@ -35,10 +34,9 @@ class FF_DOE(nn.Module):
 
 
 class ConditionalPDF(nn.Module):
-
     def __init__(self, x_dim, y_dim, pdf):
         super(ConditionalPDF, self).__init__()
-        assert pdf in {'gauss', 'logistic'}
+        assert pdf in {"gauss", "logistic"}
         self.dim = y_dim
         self.pdf = pdf
         self.X2Y = FF_DOE(x_dim, y_dim, 0.2)
@@ -63,7 +61,7 @@ class MIDOE(nn.Module):
 
     """
 
-    def __init__(self, x_dim: int, y_dim: int, hidden_size: int, pdf: str = 'gauss'):
+    def __init__(self, x_dim: int, y_dim: int, hidden_size: int, pdf: str = "gauss"):
         """
         paper from
         :param dim:

@@ -1,9 +1,11 @@
+from copy import deepcopy
+from typing import Any
+
+import torch
+from torch import Tensor
+
 from ..abstract_class.mixed_estimator import MixedEstimator
 from ..entropy.discrete_entropy import DiscreteEntropyEstimator
-from typing import Any
-from copy import deepcopy
-from torch import Tensor
-import torch
 
 
 class LinearEstimator(MixedEstimator):
@@ -19,8 +21,8 @@ class LinearEstimator(MixedEstimator):
     """
 
     def __init__(self, classifier: Any, entropy_estimator: DiscreteEntropyEstimator):
-        assert hasattr(classifier, 'fit') and callable(getattr(classifier, 'fit'))
-        assert hasattr(classifier, 'predict_proba') and callable(getattr(classifier, 'predict_proba'))
+        assert hasattr(classifier, "fit") and callable(getattr(classifier, "fit"))
+        assert hasattr(classifier, "predict_proba") and callable(getattr(classifier, "predict_proba"))
         self.initial_classifier = classifier
         self.classifier = deepcopy(classifier)
         self.entropy_estimator = entropy_estimator

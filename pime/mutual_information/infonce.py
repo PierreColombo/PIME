@@ -23,10 +23,12 @@ class InfoNCE(nn.Module):
 
     def __init__(self, x_dim: int, y_dim: int, hidden_size: int):
         super(InfoNCE, self).__init__()
-        self.F_func = nn.Sequential(nn.Linear(x_dim + y_dim, hidden_size),
-                                    nn.ReLU(),
-                                    nn.Linear(hidden_size, 1),
-                                    nn.Softplus())
+        self.F_func = nn.Sequential(
+            nn.Linear(x_dim + y_dim, hidden_size),
+            nn.ReLU(),
+            nn.Linear(hidden_size, 1),
+            nn.Softplus(),
+        )
 
     def forward(self, x_samples: Tensor, y_samples: Tensor) -> Tensor:
         # shuffle and concatenate

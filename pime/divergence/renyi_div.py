@@ -1,6 +1,7 @@
-from pime.abstract_class.discrete_estimator import DiscreteEstimator
 import torch
 from torch import Tensor
+
+from pime.abstract_class.discrete_estimator import DiscreteEstimator
 
 
 class RenyiDivergence(DiscreteEstimator):
@@ -35,4 +36,4 @@ class RenyiDivergence(DiscreteEstimator):
         :return:  Renyi divergence between X and Y
         """
 
-        return torch.log(torch.sum(X ** self.alpha * Y ** (1 - self.alpha), dim=-1)) / (self.alpha - 1)
+        return torch.log(torch.sum(X**self.alpha * Y ** (1 - self.alpha), dim=-1)) / (self.alpha - 1)

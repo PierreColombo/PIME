@@ -1,8 +1,9 @@
-import torch
-from ..misc.helpers import FF
-import torch.nn as nn
 import numpy as np
+import torch
+import torch.nn as nn
 from torch import Tensor
+
+from ..misc.helpers import FF
 
 
 class ConditionalKNIFE(nn.Module):
@@ -22,11 +23,14 @@ class ConditionalKNIFE(nn.Module):
 
     """
 
-    def __init__(self, device,
-                 number_of_samples,  # [K, d]
-                 x_size, y_size,
-                 layers=1,
-                 ):
+    def __init__(
+        self,
+        device,
+        number_of_samples,  # [K, d]
+        x_size,
+        y_size,
+        layers=1,
+    ):
         super(ConditionalKNIFE, self).__init__()
         self.K, self.d = number_of_samples, y_size
         self.device = device
@@ -62,7 +66,7 @@ class ConditionalKNIFE(nn.Module):
         mu = self._get_mean(Y)  # [1, K, d]
 
         y = X - mu  # [N, K, d]
-        y = std ** 2 * torch.sum(y ** 2, dim=2)  # [N, K]
+        y = std**2 * torch.sum(y**2, dim=2)  # [N, K]
 
         y = -y / 2 + self.d * torch.log(torch.abs(std)) + w
         y = torch.logsumexp(y, dim=-1)
